@@ -14,16 +14,19 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/mediumslateblue"
+            android:background="@color/lightgreen"
             android:fontFamily="@font/alata"
             android:text="x-pire"
             android:textAlignment="center"
-            android:textColor="@color/magnolia"
+            android:textColor="@color/white"
             android:textSize="60sp" />
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="508dp" />
+            android:layout_height="510dp"
+            android:background="@color/lightbrown"
+            android:backgroundTint="@color/lightbrown"
+            android:foreground="@color/lightbrown" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -33,24 +36,23 @@
 
             <Button
                 android:id="@+id/viewListBtn"
-                android:layout_width="130dp"
-                android:layout_height="150dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/mediumslateblue"
-                android:text="Fridge Contents"
-
-                app:cornerRadius="0dp"
-                app:icon="@drawable/baseline_kitchen_24" />
+                android:layout_width="205dp"
+                android:layout_height="130dp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/baseline_kitchen_24"
+                android:gravity="center"
+                android:text="Fridge"
+                android:textColor="@color/lightgreen" />
 
             <Button
                 android:id="@+id/cameraBtn"
-                android:layout_width="130dp"
-                android:layout_height="150dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/mediumslateblue"
+                android:layout_width="205dp"
+                android:layout_height="130dp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/baseline_add_a_photo_24"
+                android:gravity="center"
                 android:text="Scan Receipt"
-                app:cornerRadius="0dp"
-                app:icon="@drawable/baseline_add_a_photo_24" />
+                android:textColor="@color/lightgreen" />
         </LinearLayout>
 
     </LinearLayout>

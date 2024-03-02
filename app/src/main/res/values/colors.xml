@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="palepurple">#E5D9F2</color>
-    <color name="magnolia">#F5EFFF</color>
-    <color name="periwinkle">#CDC1FF</color>
-    <color name="tropicalindigo">#A594F9</color>
-    <color name="mediumslateblue">#7371FC</color>
-    <color name="darktropicalindigo">#6d62a6</color>
+    <color name="white">#fefae0</color>
+    <color name="lightgreen">#606c38</color>
+    <color name="darkgreen">#283618</color>
+    <color name="lightbrown">#dda15e</color>
+    <color name="darkbrown">#bc6c25</color>
+
 
 </resources>
