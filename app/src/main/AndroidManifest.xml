@@ -13,6 +13,18 @@
         android:theme="@style/Theme.XPire"
         tools:targetApi="31">
         <activity
+            android:name=".CameraCode"
+            android:exported="false" />
+        <activity
+            android:name=".FridgeItem"
+            android:exported="false" />
+        <activity
+            android:name=".FridgeItemDisplay"
+            android:exported="false" />
+        <activity
+            android:name=".FridgeItemAdapter"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

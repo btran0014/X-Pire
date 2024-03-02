@@ -61,7 +61,6 @@ protected void onCreate(Bundle savedInstanceState){
         }
     });
 
-
 }
 private void removeFridgeItem(int i){
     //POSSIBLE ERROR
@@ -71,22 +70,24 @@ private void removeFridgeItem(int i){
     Toast.makeText(FridgeItemDisplay.this, "Removed Item", Toast.LENGTH_SHORT).show();
 
 }
-private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate){
+private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate, int itemExpiryInt){
     String fridgeItemID = fridgeItemDatabase.push().getKey();
-    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate);
+    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate,itemExpiryInt);
     fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
     Toast.makeText(FridgeItemDisplay.this, "NEW ITEM ADDED", Toast.LENGTH_SHORT).show();
 
 }
+
 protected void onStart(){
     super.onStart();
     fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
 
     fridgeItemDatabase.addValueEventListener(new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            Toast.makeText(FridgeItemDisplay.this, "WORKS HERE", Toast.LENGTH_SHORT).show();
             fridgeItems.clear();
-            for (DataSnapshot postSnapshot : snapshot.getChildren()){
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()){
                 FridgeItem fridgeItem = postSnapshot.getValue(FridgeItem.class);
                 fridgeItems.add(fridgeItem);
             }
@@ -94,8 +95,8 @@ protected void onStart(){
             fridgeItemList.setAdapter(fridgeItemAdapter);
         }
 
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
+
+        public void onCancelled( DatabaseError databaseError) {
 
         }
     });

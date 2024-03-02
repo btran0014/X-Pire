@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent viewFridgeContentsIntent = new Intent(getApplicationContext(),FridgeItemDisplay.class);
                 startActivity(viewFridgeContentsIntent);
-                Toast.makeText(MainActivity.this, "Opening Fridge", Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
@@ -51,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
                 //finish();
                 fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
                 String fridgeItemID = fridgeItemDatabase.push().getKey();
-                FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, "item 3", "today 3", "tomorrow 3");
+                FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, "Milk","02/28/2024", "03/22/2024 ",03222024);
                 fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
                 Toast.makeText(MainActivity.this, "NEW ITEM ADDED", Toast.LENGTH_SHORT).show();
 

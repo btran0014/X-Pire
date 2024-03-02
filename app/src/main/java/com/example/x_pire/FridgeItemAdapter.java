@@ -27,6 +27,9 @@ public class FridgeItemAdapter extends ArrayAdapter<String>{
         TextView textViewExpiryDate = (TextView) listViewItem.findViewById(R.id.itemExpiryDate);
 
         FridgeItem fridgeItem = items.get(position);
+        textViewName.setText(fridgeItem.getItemName());
+        textViewLogDate.setText(fridgeItem.getItemLogDate());
+        textViewExpiryDate.setText(fridgeItem.getItemExpiryDate());
         return listViewItem;
     }
 }
