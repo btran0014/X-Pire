@@ -14,7 +14,7 @@ public class FridgeItemAdapter extends ArrayAdapter<String>{
     List<FridgeItem> items;
 
     public FridgeItemAdapter(Activity context, List items){
-        super(context, R.layout.list_item_template);
+        super(context, R.layout.list_item_template,items);
         this.context=context;
         this.items=items;
     }

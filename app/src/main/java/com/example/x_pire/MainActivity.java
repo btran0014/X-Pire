@@ -10,17 +10,24 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 
 public class MainActivity extends AppCompatActivity {
 
     Button btnFridgeContents, btnOpenCamera;
+    private DatabaseReference fridgeItemDatabase;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         btnFridgeContents = findViewById(R.id.viewListBtn);
         btnOpenCamera = findViewById(R.id.cameraBtn);
@@ -38,10 +45,16 @@ public class MainActivity extends AppCompatActivity {
         btnOpenCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent openCameraIntent = new Intent(getApplicationContext(),CameraCode.class);
-                startActivity(openCameraIntent);
-                Toast.makeText(MainActivity.this, "Opening Camera!", Toast.LENGTH_SHORT).show();
-                finish();
+                //Intent openCameraIntent = new Intent(getApplicationContext(),CameraCode.class);
+                //startActivity(openCameraIntent);
+                //Toast.makeText(MainActivity.this, "Opening Camera!", Toast.LENGTH_SHORT).show();
+                //finish();
+                fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
+                String fridgeItemID = fridgeItemDatabase.push().getKey();
+                FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, "item 3", "today 3", "tomorrow 3");
+                fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
+                Toast.makeText(MainActivity.this, "NEW ITEM ADDED", Toast.LENGTH_SHORT).show();
+
             }
         });
     }
