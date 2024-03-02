@@ -14,7 +14,7 @@ public class FridgeItemAdapter extends ArrayAdapter<String>{
     List<FridgeItem> items;
 
     public FridgeItemAdapter(Activity context, List items){
-        super(context, R.layout.list_item_template);
+        super(context, R.layout.list_item_template,items);
         this.context=context;
         this.items=items;
     }
@@ -27,6 +27,9 @@ public class FridgeItemAdapter extends ArrayAdapter<String>{
         TextView textViewExpiryDate = (TextView) listViewItem.findViewById(R.id.itemExpiryDate);
 
         FridgeItem fridgeItem = items.get(position);
+        textViewName.setText(fridgeItem.getItemName());
+        textViewLogDate.setText(fridgeItem.getItemLogDate());
+        textViewExpiryDate.setText(fridgeItem.getItemExpiryDate());
         return listViewItem;
     }
 }

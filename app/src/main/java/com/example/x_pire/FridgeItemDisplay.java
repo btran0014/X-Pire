@@ -37,7 +37,6 @@ public class FridgeItemDisplay extends AppCompatActivity {
     private DatabaseReference fridgeItemDatabase;
 protected void onCreate(Bundle savedInstanceState){
     super.onCreate(savedInstanceState);
-    createFridgeItem("item1","today","tomorrow");
     setContentView(R.layout.fridge_items_list);
     btnReturn = (Button) findViewById(R.id.btnReturn);
     fridgeItemList = findViewById(R.id.fridgeItemList);
@@ -48,7 +47,7 @@ protected void onCreate(Bundle savedInstanceState){
     btnReturn.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Intent returnIntent = new Intent(getApplicationContext(), Welcome.class);
+            Intent returnIntent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(returnIntent);
             finish();
         }
@@ -62,32 +61,33 @@ protected void onCreate(Bundle savedInstanceState){
         }
     });
 
-
 }
 private void removeFridgeItem(int i){
+    //POSSIBLE ERROR
     FridgeItem currentItem = fridgeItems.get(i);
     DatabaseReference dR = FirebaseDatabase.getInstance().getReference("fridgeItems").child(currentItem.getItemID());
     dR.removeValue();
     Toast.makeText(FridgeItemDisplay.this, "Removed Item", Toast.LENGTH_SHORT).show();
 
 }
-private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate){
+private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate, int itemExpiryInt){
     String fridgeItemID = fridgeItemDatabase.push().getKey();
-    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate);
+    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate,itemExpiryInt);
     fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
     Toast.makeText(FridgeItemDisplay.this, "NEW ITEM ADDED", Toast.LENGTH_SHORT).show();
 
 }
+
 protected void onStart(){
-    createFridgeItem("item1","today","tomorrow");
     super.onStart();
     fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
 
     fridgeItemDatabase.addValueEventListener(new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            Toast.makeText(FridgeItemDisplay.this, "WORKS HERE", Toast.LENGTH_SHORT).show();
             fridgeItems.clear();
-            for (DataSnapshot postSnapshot : snapshot.getChildren()){
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()){
                 FridgeItem fridgeItem = postSnapshot.getValue(FridgeItem.class);
                 fridgeItems.add(fridgeItem);
             }
@@ -95,8 +95,8 @@ protected void onStart(){
             fridgeItemList.setAdapter(fridgeItemAdapter);
         }
 
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
+
+        public void onCancelled( DatabaseError databaseError) {
 
         }
     });
