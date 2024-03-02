@@ -10,6 +10,58 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/lightgreen"
+            android:fontFamily="@font/alata"
+            android:text="x-pire"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="60sp" />
+
+        <View
+            android:id="@+id/displayView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:background="@color/lightgreen"
+            android:backgroundTint="@color/lightgreen"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/viewListBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/darkgreen"
+                android:drawableTop="@drawable/baseline_kitchen_24"
+                android:gravity="center"
+                android:text="Fridge"
+                android:textColor="@color/white"
+                app:cornerRadius="20px" />
+
+            <Button
+                android:id="@+id/cameraBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/lightgreen"
+                android:drawableTop="@drawable/baseline_add_a_photo_24"
+                android:gravity="center"
+                android:text="Scan Receipt"
+                android:textColor="@color/white"
+                app:cornerRadius="20px" />
+
+        </LinearLayout>
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent" >
@@ -23,6 +75,8 @@
                     android:id="@+id/fridgeItemListTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/lightbrown"
+                    android:backgroundTint="@color/lightbrown"
                     android:text="Fridge Items"
                     android:textAlignment="center"
                     android:textSize="28sp" />
