@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,6 +75,8 @@
                     android:id="@+id/fridgeItemListTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/lightbrown"
+                    android:backgroundTint="@color/lightbrown"
                     android:text="Fridge Items"
                     android:textAlignment="center"
                     android:textSize="28sp" />
