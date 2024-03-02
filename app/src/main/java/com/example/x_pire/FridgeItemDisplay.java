@@ -39,7 +39,7 @@ protected void onCreate(Bundle savedInstanceState){
     super.onCreate(savedInstanceState);
     createFridgeItem("item1","today","tomorrow");
     setContentView(R.layout.fridge_items_list);
-    btnReturn = (Button) findViewById(R.id.btnReturn);
+    //btnReturn = (Button) findViewById(R.id.btnReturn);
     fridgeItemList = findViewById(R.id.fridgeItemList);
     fridgeItems = new ArrayList<>();
 

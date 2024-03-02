@@ -41,11 +41,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:backgroundTint="@color/darkgreen"
+                android:backgroundTint="@color/lightgreen"
                 android:drawableTop="@drawable/baseline_kitchen_24"
                 android:gravity="center"
                 android:text="Fridge"
                 android:textColor="@color/white" />
+
 
             <Button
                 android:id="@+id/cameraBtn"
@@ -56,6 +57,16 @@
                 android:drawableTop="@drawable/baseline_add_a_photo_24"
                 android:gravity="center"
                 android:text="Scan Receipt"
+                android:textColor="@color/white" />
+            <Button
+                android:id="@+id/addItembtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/lightgreen"
+                android:drawableTop="@drawable/baseline_format_list_bulleted_24"
+                android:gravity="center"
+                android:text="Add Items"
                 android:textColor="@color/white" />
         </LinearLayout>
 
