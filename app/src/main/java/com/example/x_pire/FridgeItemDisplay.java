@@ -37,6 +37,7 @@ public class FridgeItemDisplay extends AppCompatActivity {
     private DatabaseReference fridgeItemDatabase;
 protected void onCreate(Bundle savedInstanceState){
     super.onCreate(savedInstanceState);
+    createFridgeItem("item1","today","tomorrow");
     setContentView(R.layout.fridge_items_list);
     btnReturn = (Button) findViewById(R.id.btnReturn);
     fridgeItemList = findViewById(R.id.fridgeItemList);
@@ -78,6 +79,7 @@ private void createFridgeItem(String itemName, String itemLogDate, String itemEx
 
 }
 protected void onStart(){
+    createFridgeItem("item1","today","tomorrow");
     super.onStart();
     fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
 
