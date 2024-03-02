@@ -27,6 +27,17 @@ public class Welcome extends AppCompatActivity {
             public void onClick(View view) {
                 Intent viewFridgeContentsIntent = new Intent(getApplicationContext(),FridgeItemDisplay.class);
                 startActivity(viewFridgeContentsIntent);
+                finish();
+            }
+        });
+
+        btnOpenCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent openCameraIntent = new Intent(getApplicationContext(),CameraCode.class);
+                startActivity(openCameraIntent);
+                Toast.makeText(Welcome.this, "Opening Camera!", Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
     }
