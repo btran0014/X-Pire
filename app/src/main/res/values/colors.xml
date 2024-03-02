@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="palepurple">#E5D9F2</color>
+    <color name="magnolia">#F5EFFF</color>
+    <color name="periwinkle">#CDC1FF</color>
+    <color name="tropicalindigo">#A594F9</color>
+    <color name="mediumslateblue">#7371FC</color>
+    <color name="darktropicalindigo">#6d62a6</color>
+
 </resources>
