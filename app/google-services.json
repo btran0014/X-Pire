@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "871275592843",
+    "project_id": "x-pire-2e0c5",
+    "storage_bucket": "x-pire-2e0c5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871275592843:android:1446d9d2e95c3d37c9288e",
+        "android_client_info": {
+          "package_name": "com.example.x_pire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcqn0HCH1T2U8bbWr1qOi3AL8llqtP2nA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
