@@ -60,6 +60,14 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
                 manualEntryPopup();
             }
         });
+        fridgeItemList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                editItemPopup(i);
+                return true;
+
+            }
+        });
 
 
 
