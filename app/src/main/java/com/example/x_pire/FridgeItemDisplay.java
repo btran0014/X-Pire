@@ -117,6 +117,68 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
     }
 
     private void editItemPopup(int i){
+        FridgeItem currentItem = fridgeItems.get(i);
+        AlertDialog.Builder editDialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater editInflater = getLayoutInflater();
+        final View editDialogView = editInflater.inflate(R.layout.item_edit_popup, null);
+        editDialogBuilder.setView(editDialogView);
+
+
+        Button cancel = (Button) editDialogView.findViewById(R.id.cancelBtn);
+        Button save = (Button) editDialogView.findViewById(R.id.saveBtn);
+        Button delete = (Button) editDialogView.findViewById(R.id.deleteBtn);
+
+        TextInputEditText itemName = (TextInputEditText) editDialogView.findViewById(R.id.itemNameInput);
+        TextInputEditText itemLogDate = (TextInputEditText) editDialogView.findViewById(R.id.itemLogDateInput);
+        TextInputEditText itemQuantity = (TextInputEditText) editDialogView.findViewById(R.id.itemQuantityInput);
+        TextInputEditText itemExpiryDate = (TextInputEditText) editDialogView.findViewById(R.id.itemExpiryInput);
+        TextInputEditText itemExpiryDateInt = (TextInputEditText) editDialogView.findViewById(R.id.itemExpiryIntInput);
+
+        itemName.setText(currentItem.getItemName());
+        itemLogDate.setText(currentItem.getItemLogDate());
+        itemQuantity.setText(currentItem.getItemQuantity());
+
+        final AlertDialog editMenuBuilder = editDialogBuilder.create();
+        editMenuBuilder.show();
+
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editMenuBuilder.dismiss();
+            }
+        });
+
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseReference dR = FirebaseDatabase.getInstance().getReference("fridgeItems").child(currentItem.getItemID());
+                dR.removeValue();
+                Toast.makeText(FridgeItemDisplay.this, "ITEM DELETED", Toast.LENGTH_SHORT).show();
+                editMenuBuilder.dismiss();
+
+            }
+        });
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String newItemName = itemName.getText().toString().trim();
+                String newItemLogDate = itemLogDate.getText().toString().trim();
+                int newItemQuantity = Integer.parseInt(itemQuantity.getText().toString());
+                String newItemExpiryDate = itemExpiryDate.getText().toString().trim();
+                int newItemExpiryDateInt = Integer.parseInt(itemExpiryDateInt.getText().toString());
+
+                String currentItemID = currentItem.getItemID();
+                FridgeItem replaceFridgeItem = new FridgeItem(currentItemID,newItemName,newItemLogDate,newItemExpiryDate,newItemExpiryDateInt,newItemQuantity);
+                fridgeItemDatabase.child(currentItemID).setValue(replaceFridgeItem);
+                Toast.makeText(FridgeItemDisplay.this, "Item Updated", Toast.LENGTH_SHORT).show();
+                editMenuBuilder.dismiss();
+
+
+
+
+            }
+        });
 
     }
 
