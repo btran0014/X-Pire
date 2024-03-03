@@ -35,7 +35,8 @@
             android:layout_marginEnd="8dp"
             android:gravity="center_vertical"
             android:text="Quantity"
-            android:textAlignment="textStart" />
+            android:textAlignment="textStart"
+            tools:gravity="center" />
 
         <LinearLayout
             android:layout_width="0dp"

@@ -42,9 +42,9 @@ public class FridgeItemAdapter extends ArrayAdapter<FridgeItem> {
 
         FridgeItem fridgeItem = items.get(position);
         textViewName.setText(fridgeItem.getItemName());
-        textViewLogDate.setText(fridgeItem.getItemLogDate());
+        textViewLogDate.setText("Bought: "+fridgeItem.getItemLogDate());
         textViewExpiryDate.setText(fridgeItem.getItemExpiryDate());
-        textViewQuantity.setText("Qty: " + fridgeItem.getItemQuantity());
+        textViewQuantity.setText("" + fridgeItem.getItemQuantity());
 
         Button btnDecQuan = listViewItem.findViewById(R.id.decQuanButton);
         btnDecQuan.setOnClickListener(new View.OnClickListener() {
