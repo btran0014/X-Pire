@@ -42,6 +42,5 @@ public class FridgeItem {
     }
     public int getItemQuantity(){return itemQuantity;}
 
-
     public void decreaseQuantity(){itemQuantity--;}
 }
