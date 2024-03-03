@@ -1,9 +1,11 @@
 package com.example.x_pire;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +33,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public class FridgeItemDisplay extends AppCompatActivity {
     private Button btnReturn;
+    private Button btnOpenCamera;
     private ListView fridgeItemList;
     private List<FridgeItem> fridgeItems;
 
@@ -39,11 +42,12 @@ protected void onCreate(Bundle savedInstanceState){
     super.onCreate(savedInstanceState);
     setContentView(R.layout.fridge_items_list);
     btnReturn = (Button) findViewById(R.id.btnReturn);
+    btnOpenCamera = findViewById(R.id.cameraBtn);
     fridgeItemList = findViewById(R.id.fridgeItemList);
     fridgeItems = new ArrayList<>();
 
     fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
-
+    btnOpenCamera.setOnClickListener(v -> CameraHelper.openCamera(FridgeItemDisplay.this));
     btnReturn.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -52,6 +56,7 @@ protected void onCreate(Bundle savedInstanceState){
             finish();
         }
     });
+
 
     fridgeItemList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
         @Override
@@ -62,6 +67,24 @@ protected void onCreate(Bundle savedInstanceState){
     });
 
 }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Bitmap photo = CameraHelper.processActivityResult(requestCode, resultCode, data);
+        if (photo != null) {
+
+        } else {
+            Toast.makeText(this, "Canceled", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        CameraHelper.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+    }
 private void removeFridgeItem(int i){
     //POSSIBLE ERROR
     FridgeItem currentItem = fridgeItems.get(i);
@@ -101,4 +124,5 @@ protected void onStart(){
         }
     });
 }
+
 }
