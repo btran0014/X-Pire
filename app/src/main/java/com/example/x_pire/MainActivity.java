@@ -6,9 +6,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
 import android.widget.Button;
-import android.view.View;
 import android.widget.Toast;
+import android.view.View;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DataSnapshot;
@@ -16,6 +17,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -46,7 +51,15 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Bitmap photo = CameraHelper.processActivityResult(requestCode, resultCode, data);
         if (photo != null) {
-
+            try {
+                File photoFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "photo.png");
+                FileOutputStream fos = new FileOutputStream(photoFile);
+                photo.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+                //'photoFile' contains the PNG image
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             Toast.makeText(this, "Canceled", Toast.LENGTH_SHORT).show();
         }

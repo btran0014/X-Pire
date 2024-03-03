@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -17,6 +18,9 @@ import android.widget.Toast;
 import android.widget.Spinner;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -89,7 +93,15 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         super.onActivityResult(requestCode, resultCode, data);
         Bitmap photo = CameraHelper.processActivityResult(requestCode, resultCode, data);
         if (photo != null) {
-
+            try {
+                File photoFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "photo.png");
+                FileOutputStream fos = new FileOutputStream(photoFile);
+                photo.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+                //'photoFile' contains the PNG image
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             Toast.makeText(this, "Canceled", Toast.LENGTH_SHORT).show();
         }
