@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
 
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -138,8 +139,17 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         String selected_type = parent.getItemAtPosition(position).toString();
         Toast.makeText(parent.getContext(),selected_type, Toast.LENGTH_SHORT).show();
-
-
+        if(selected_type.equals("Alphabetical")) {
+            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemName));
+        } else if(selected_type.equals("Expiry Date")) {
+            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemExpiryInt));
+        } else if(selected_type.equals("Quantity")) {
+            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemQuantity).reversed());
+        } else {
+            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemLogDateInt));
+        }
+        FridgeItemAdapter fridgeItemAdapter = new FridgeItemAdapter(FridgeItemDisplay.this, fridgeItems);
+        fridgeItemList.setAdapter(fridgeItemAdapter);
     }
 
     @Override
