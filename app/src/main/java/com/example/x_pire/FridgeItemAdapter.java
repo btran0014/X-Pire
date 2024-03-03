@@ -25,11 +25,13 @@ public class FridgeItemAdapter extends ArrayAdapter<String>{
         TextView textViewName = (TextView) listViewItem.findViewById(R.id.itemName);
         TextView textViewLogDate = (TextView) listViewItem.findViewById(R.id.itemLogDate);
         TextView textViewExpiryDate = (TextView) listViewItem.findViewById(R.id.itemExpiryDate);
+        TextView textViewQuantity = (TextView) listViewItem.findViewById(R.id.itemQuantity);
 
         FridgeItem fridgeItem = items.get(position);
         textViewName.setText(fridgeItem.getItemName());
         textViewLogDate.setText(fridgeItem.getItemLogDate());
         textViewExpiryDate.setText(fridgeItem.getItemExpiryDate());
+        textViewQuantity.setText("Qty: " + fridgeItem.getItemQuantity());
         return listViewItem;
     }
 }
