@@ -97,13 +97,11 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
             public void onClick(View view){
                 String fridgeItemName = itemName.getText().toString().trim();
                 String fridgeItemLogDate = itemLogDate.getText().toString().trim();
-                int fridgeItemQuantity = Integer.valueOf(itemQuantity.getText().toString().trim());
+                int fridgeItemQuantity = Integer.parseInt(itemQuantity.getText().toString());
+
+
+                createFridgeItem(fridgeItemName,fridgeItemLogDate,"10/22/2024",10222024,fridgeItemQuantity);
                 Toast.makeText(FridgeItemDisplay.this, "WORKS HERE", Toast.LENGTH_SHORT).show();
-
-
-                createFridgeItem("TEST ITEM","TEST LOG DATE","CALCULATE THIS",1,1000);
-
-
                 createMenuBuilder.dismiss();
             }
         });
@@ -147,6 +145,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
 
     }
     private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate, int itemExpiryInt, int itemQuantity){
+        Toast.makeText(FridgeItemDisplay.this, "WORKS HERE", Toast.LENGTH_SHORT).show();
         String fridgeItemID = fridgeItemDatabase.push().getKey();
         FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate,itemExpiryInt, itemQuantity);
         fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
