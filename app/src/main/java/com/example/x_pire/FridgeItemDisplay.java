@@ -151,7 +151,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         } else if(selected_type.equals("Quantity")) {
             Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemQuantity).reversed());
         } else {
-            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemLogDateInt));
+            Collections.sort(fridgeItems, Comparator.comparing(FridgeItem::getItemLogDateInt).reversed());
         }
         FridgeItemAdapter fridgeItemAdapter = new FridgeItemAdapter(FridgeItemDisplay.this, fridgeItems);
         fridgeItemList.setAdapter(fridgeItemAdapter);

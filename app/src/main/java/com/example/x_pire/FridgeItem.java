@@ -1,5 +1,7 @@
 package com.example.x_pire;
 
+import java.util.Locale;
+
 public class FridgeItem {
     private String itemName, itemExpiryDate, itemID, itemLogDate;
     private int itemExpiryInt, itemQuantity;
@@ -28,7 +30,7 @@ public class FridgeItem {
     public void setItemQuantity(int input){this.itemQuantity = input;}
 
     public String getItemName(){
-        return itemName;
+        return itemName.toLowerCase(Locale.ROOT);
     }
     public String getItemLogDate(){
         return itemLogDate;
