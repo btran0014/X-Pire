@@ -47,7 +47,8 @@
             android:drawablePadding="20dp"
             android:ems="10"
             android:hint="Enter Item Name"
-            android:inputType="text" />
+            android:inputType="text"
+            android:textColor="@color/black" />
 
 
         <Space
@@ -105,7 +106,8 @@
             android:drawablePadding="15dp"
             android:ems="10"
             android:hint="Enter the Amount Bought"
-            android:inputType="text" />
+            android:inputType="text"
+            android:textColor="@color/black" />
 
         <Space
             android:layout_width="match_parent"
@@ -125,7 +127,8 @@
 
                 android:backgroundTint="@color/darkgreen"
 
-                android:text="Cancel" />
+                android:text="Cancel"
+                android:textColor="@color/white" />
 
             <Button
                 android:id="@+id/saveBtn"
@@ -135,7 +138,8 @@
 
                 android:backgroundTint="@color/darkgreen"
 
-                android:text="Confirm" />
+                android:text="Confirm"
+                android:textColor="@color/white" />
         </LinearLayout>
 
     </LinearLayout>
