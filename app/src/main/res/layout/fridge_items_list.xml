@@ -84,7 +84,8 @@
                 android:layout_margin="10dp"
                 android:layout_weight="1"
                 android:backgroundTint="@color/lightgreen"
-                android:drawableTop="@drawable/baseline_kitchen_24"
+                android:drawableTop="@drawable/baseline_add_shopping_cart_24"
+
                 android:gravity="center"
                 android:text="Manual Entry"
                 android:textColor="@color/white"
