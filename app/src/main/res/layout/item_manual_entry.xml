@@ -13,6 +13,7 @@
         android:orientation="vertical"
         android:padding="10dp">
 
+
         <TextView
             android:id="@+id/newItemTitletextView"
             android:layout_width="match_parent"
@@ -22,45 +23,55 @@
             android:text="New Item:"
             android:textAlignment="center"
             android:textColor="@color/white"
+
             android:textSize="30dp" />
 
         <TextView
             android:id="@+id/itemNametextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:background="@color/lightgreen"
             android:text="Item Name:"
             android:textAlignment="inherit"
+
             android:textSize="20dp" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/itemNameInput"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+
             android:background="@color/white"
+
             android:drawablePadding="20dp"
             android:ems="10"
             android:hint="Enter Item Name"
             android:inputType="text" />
+
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="10dp"></Space>
 
 
+
         <TextView
             android:id="@+id/itemLogDatetextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:background="@color/lightgreen"
             android:text="Date Acquired:"
             android:textAlignment="inherit"
+
             android:textSize="20dp" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/itemLogDateInput"
             android:layout_width="match_parent"
             android:layout_height="48dp"
+
             android:background="@color/white"
             android:drawablePadding="15dp"
             android:ems="10"
@@ -72,20 +83,25 @@
             android:layout_width="match_parent"
             android:layout_height="10dp"></Space>
 
+
         <TextView
             android:id="@+id/itemQuantitytextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:background="@color/lightgreen"
             android:text="Item Quantity:"
             android:textAlignment="inherit"
+
             android:textSize="20dp" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/itemQuantityInput"
             android:layout_width="match_parent"
             android:layout_height="48dp"
+
             android:background="@color/white"
+
             android:drawablePadding="15dp"
             android:ems="10"
             android:hint="Enter the Amount Bought"
@@ -94,6 +110,7 @@
         <Space
             android:layout_width="match_parent"
             android:layout_height="20dp"></Space>
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -105,7 +122,9 @@
                 android:layout_width="20dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
+
                 android:backgroundTint="@color/darkgreen"
+
                 android:text="Cancel" />
 
             <Button
@@ -113,7 +132,9 @@
                 android:layout_width="20dp"
                 android:layout_height="50dp"
                 android:layout_weight="1"
+
                 android:backgroundTint="@color/darkgreen"
+
                 android:text="Confirm" />
         </LinearLayout>
 

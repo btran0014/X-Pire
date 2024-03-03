@@ -5,33 +5,70 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Iterator;
 import java.util.List;
-public class FridgeItemAdapter extends ArrayAdapter<String>{
+
+public class FridgeItemAdapter extends ArrayAdapter<FridgeItem> {
 
     private Activity context;
-    List<FridgeItem> items;
+    private List<FridgeItem> items;
+    private OnQuantityDecreaseListener onQuantityDecreaseListener;
 
-    public FridgeItemAdapter(Activity context, List items){
-        super(context, R.layout.list_item_template,items);
-        this.context=context;
-        this.items=items;
+    public interface OnQuantityDecreaseListener {
+        void onQuantityDecrease(int position);
     }
-    public View getView(int position, View convertView, ViewGroup parent){
+
+    public void setOnQuantityDecreaseListener(OnQuantityDecreaseListener listener) {
+        this.onQuantityDecreaseListener = listener;
+    }
+
+    public FridgeItemAdapter(Activity context, List<FridgeItem> items){
+        super(context, R.layout.list_item_template, items);
+        this.context = context;
+        this.items = items;
+    }
+
+    public View getView(final int position, View convertView, ViewGroup parent){
         LayoutInflater inflater = context.getLayoutInflater();
         View listViewItem = inflater.inflate(R.layout.list_item_template, null, true);
 
-        TextView textViewName = (TextView) listViewItem.findViewById(R.id.itemName);
-        TextView textViewLogDate = (TextView) listViewItem.findViewById(R.id.itemLogDate);
-        TextView textViewExpiryDate = (TextView) listViewItem.findViewById(R.id.itemExpiryDate);
-        TextView textViewQuantity = (TextView) listViewItem.findViewById(R.id.itemQuantity);
+        TextView textViewName = listViewItem.findViewById(R.id.itemName);
+        TextView textViewLogDate = listViewItem.findViewById(R.id.itemLogDate);
+        TextView textViewExpiryDate = listViewItem.findViewById(R.id.itemExpiryDate);
+        TextView textViewQuantity = listViewItem.findViewById(R.id.itemQuantity);
 
         FridgeItem fridgeItem = items.get(position);
         textViewName.setText(fridgeItem.getItemName());
-        textViewLogDate.setText(fridgeItem.getItemLogDate());
+        textViewLogDate.setText("Bought: "+fridgeItem.getItemLogDate());
         textViewExpiryDate.setText(fridgeItem.getItemExpiryDate());
-        textViewQuantity.setText("Qty: " + fridgeItem.getItemQuantity());
+        textViewQuantity.setText("" + fridgeItem.getItemQuantity());
+
+        Button btnDecQuan = listViewItem.findViewById(R.id.decQuanButton);
+        btnDecQuan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FridgeItem currentItem = items.get(position);
+                currentItem.decreaseQuantity();
+
+                if (currentItem.getItemQuantity() == 0) {
+                    removeItem(position);
+                }
+
+                notifyDataSetChanged();
+
+                if (onQuantityDecreaseListener != null) {
+                    onQuantityDecreaseListener.onQuantityDecrease(position);
+                }
+            }
+        });
+
         return listViewItem;
+    }
+
+    private void removeItem(int position) {
+        items.remove(position);
     }
 }

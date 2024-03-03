@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">X-Pire</string>
+
+    <string-array name="sorting_types">
+        <item>Alphabetical</item>
+        <item>Expiry Date</item>
+        <item>Quantity</item>
+        <item>Acquisition Date</item>
+
+    </string-array>
+
 </resources>
+

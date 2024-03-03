@@ -6,62 +6,78 @@
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/horizontalBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0"/>
+
+        <Button
+            android:id="@+id/decQuanButton"
+            android:layout_width="44dp"
+            android:layout_height="45dp"
+            android:backgroundTint="@color/lightgreen"
+            android:drawableTop="@drawable/baseline_arrow_drop_down_24"
+            app:cornerRadius="20sp"/>
+
+        <TextView
+            android:id="@+id/itemQuantity"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Quantity"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            tools:textAlignment="center" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="240dp"
-                android:layout_height="60dp"
-                android:layout_weight="0"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/itemName"
-                    android:layout_width="240dp"
-                    android:layout_height="wrap_content"
-                    android:text="Name" />
-
-                <TextView
-                    android:id="@+id/itemExpiryDate"
-                    android:layout_width="240dp"
-                    android:layout_height="wrap_content"
-                    android:text="ExpiryDate" />
-
-                <TextView
-                    android:id="@+id/itemLogDate"
-                    android:layout_width="240dp"
-                    android:layout_height="wrap_content"
-                    android:text="LogDate" />
-
-            </LinearLayout>
-
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/itemQuantity"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_weight="0"
-                android:gravity="center_vertical|center_horizontal"
-                android:text="Quantity"
-                android:textAlignment="center" />
+                android:id="@+id/itemName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Name"
+                android:textSize="18sp" />
 
-            <Button
-                android:id="@+id/decQuanButton"
-                android:layout_width="44dp"
-                android:layout_height="46dp"
-                android:layout_margin="10dp"
-                android:backgroundTint="@color/lightgreen"
-                android:drawableTop="@drawable/baseline_arrow_drop_down_24"
-                app:cornerRadius="20sp" />
+            <TextView
+                android:id="@+id/itemLogDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Log Date"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp" />
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/itemExpiryDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="10dp"
+            android:text="Expiry Date"
+            android:textSize="18sp" />
+
     </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
