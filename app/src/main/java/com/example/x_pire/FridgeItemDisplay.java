@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+import java.util.*;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -91,6 +92,13 @@ protected void onStart(){
                 FridgeItem fridgeItem = postSnapshot.getValue(FridgeItem.class);
                 fridgeItems.add(fridgeItem);
             }
+            //sort by expiry date
+            /*Collections.sort(fridgeItems, new Comparator<FridgeItem>() {
+                @Override
+                public int compare(FridgeItem o1, FridgeItem o2) {
+                    return o1.getItemExpiryInt() - o2.getItemExpiryInt();
+                }
+            });*/
             FridgeItemAdapter fridgeItemAdapter = new FridgeItemAdapter(FridgeItemDisplay.this, fridgeItems);
             fridgeItemList.setAdapter(fridgeItemAdapter);
         }
