@@ -10,6 +10,9 @@ import android.widget.Button;
 import android.view.View;
 import android.widget.Toast;
 
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
+
 
 public class MainActivity extends AppCompatActivity {
     Button btnFridgeContents, btnOpenCamera;
@@ -39,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Bitmap photo = CameraHelper.processActivityResult(requestCode, resultCode, data);
         if (photo != null) {
-
+            if (! Python.isStarted()) {
+                Python.start(new AndroidPlatform(MainActivity.this));
+            }
         } else {
             Toast.makeText(this, "Canceled", Toast.LENGTH_SHORT).show();
         }

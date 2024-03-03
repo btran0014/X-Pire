@@ -2,4 +2,5 @@
 plugins {
     id("com.android.application") version "8.1.2" apply false
     id("com.google.gms.google-services") version "4.4.1" apply false
+    id("com.chaquo.python") version "15.0.1" apply false
 }
