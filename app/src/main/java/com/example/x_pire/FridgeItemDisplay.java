@@ -10,9 +10,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.widget.Spinner;
+
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -31,11 +34,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class FridgeItemDisplay extends AppCompatActivity {
+public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
     private Button btnReturn;
     private Button btnOpenCamera;
     private ListView fridgeItemList;
     private List<FridgeItem> fridgeItems;
+    private Spinner sortingType;
 
     private DatabaseReference fridgeItemDatabase;
     protected void onCreate(Bundle savedInstanceState){
@@ -45,7 +49,12 @@ public class FridgeItemDisplay extends AppCompatActivity {
         btnOpenCamera = findViewById(R.id.cameraBtn);
         fridgeItemList = findViewById(R.id.fridgeItemList);
         fridgeItems = new ArrayList<>();
+        Spinner spinner = findViewById(R.id.sortTypeSpinner);
 
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.sorting_types,android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
         fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
         btnOpenCamera.setOnClickListener(v -> CameraHelper.openCamera(FridgeItemDisplay.this));
         btnReturn.setOnClickListener(new View.OnClickListener() {
@@ -125,4 +134,16 @@ public class FridgeItemDisplay extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String selected_type = parent.getItemAtPosition(position).toString();
+        Toast.makeText(parent.getContext(),selected_type, Toast.LENGTH_SHORT).show();
+
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
 }
