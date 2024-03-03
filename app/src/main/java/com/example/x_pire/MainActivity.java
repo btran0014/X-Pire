@@ -10,8 +10,11 @@ import android.widget.Button;
 import android.view.View;
 import android.widget.Toast;
 
+import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+
+import java.io.ByteArrayOutputStream;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -43,7 +46,18 @@ public class MainActivity extends AppCompatActivity {
         Bitmap photo = CameraHelper.processActivityResult(requestCode, resultCode, data);
         if (photo != null) {
             if (! Python.isStarted()) {
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+
                 Python.start(new AndroidPlatform(MainActivity.this));
+
+                Python py = Python.getInstance();
+
+                PyObject pyf = py.getModule("imagereader");
+
+                PyObject obj = pyf.callAttr("main", byteArray);
+                Toast.makeText(this, "YASSSSS", Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(this, "Canceled", Toast.LENGTH_SHORT).show();

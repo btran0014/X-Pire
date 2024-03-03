@@ -34,16 +34,27 @@ android {
     }
     flavorDimensions += "pyVersion"
     productFlavors {
-        create("py310") { dimension = "pyVersion" }
         create("py311") { dimension = "pyVersion" }
     }
 
 }
 chaquopy {
     productFlavors {
-        getByName("py310") { version = "3.10" }
         getByName("py311") { version = "3.11" }
     }
+    defaultConfig {
+        pip {
+
+            install("pytesseract")
+            install("requests")
+            //install("numpy==1.22.2")
+            install("Pillow")
+            //install("opencv-python")
+
+
+        }
+    }
+
 }
 
 dependencies {
