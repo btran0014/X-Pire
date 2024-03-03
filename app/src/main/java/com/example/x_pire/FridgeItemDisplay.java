@@ -70,9 +70,9 @@ private void removeFridgeItem(int i){
     Toast.makeText(FridgeItemDisplay.this, "Removed Item", Toast.LENGTH_SHORT).show();
 
 }
-private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate, int itemExpiryInt){
+private void createFridgeItem(String itemName, String itemLogDate, String itemExpiryDate, int itemExpiryInt, int itemQuantity){
     String fridgeItemID = fridgeItemDatabase.push().getKey();
-    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate,itemExpiryInt);
+    FridgeItem addFridgeItem = new FridgeItem(fridgeItemID, itemName, itemLogDate, itemExpiryDate,itemExpiryInt, itemQuantity);
     fridgeItemDatabase.child(fridgeItemID).setValue(addFridgeItem);
     Toast.makeText(FridgeItemDisplay.this, "NEW ITEM ADDED", Toast.LENGTH_SHORT).show();
 
