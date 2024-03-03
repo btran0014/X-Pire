@@ -17,17 +17,14 @@ import android.widget.Toast;
 import android.widget.Spinner;
 
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.*;
 
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -60,9 +57,10 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         btnOpenCamera.setOnClickListener(v -> CameraHelper.openCamera(FridgeItemDisplay.this));
         btnManualEntry.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-
+                manualEntryPopup();
             }
         });
+
 
 
         FridgeItemAdapter.OnQuantityDecreaseListener listener = new FridgeItemAdapter.OnQuantityDecreaseListener() {
@@ -79,7 +77,50 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         fridgeItemAdapter.setOnQuantityDecreaseListener(listener);
         fridgeItemList.setAdapter(fridgeItemAdapter);
     }
+    private void manualEntryPopup(){
+        AlertDialog.Builder createDialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater creationInflater = getLayoutInflater();
+        final View createDialogView = creationInflater.inflate(R.layout.item_manual_entry, null);
+        createDialogBuilder.setView(createDialogView);
 
+        Button cancel = (Button) createDialogView.findViewById(R.id.cancelBtn);
+        Button save = (Button) createDialogView.findViewById(R.id.saveBtn);
+
+        TextInputEditText itemName = (TextInputEditText) createDialogView.findViewById(R.id.itemNameInput);
+        TextInputEditText itemLogDate = (TextInputEditText) createDialogView.findViewById(R.id.itemLogDateInput);
+        TextInputEditText itemQuantity = (TextInputEditText) createDialogView.findViewById(R.id.itemQuantityInput);
+
+        final AlertDialog createMenuBuilder = createDialogBuilder.create();
+        createMenuBuilder.show();
+
+        save.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                String fridgeItemName = itemName.getText().toString().trim();
+                String fridgeItemLogDate = itemLogDate.getText().toString().trim();
+                int fridgeItemQuantity = Integer.valueOf(itemQuantity.getText().toString().trim());
+                Toast.makeText(FridgeItemDisplay.this, "WORKS HERE", Toast.LENGTH_SHORT).show();
+
+
+                createFridgeItem("TEST ITEM","TEST LOG DATE","CALCULATE THIS",1,1000);
+
+
+                createMenuBuilder.dismiss();
+            }
+        });
+
+        cancel.setOnClickListener(new View.OnClickListener(){
+
+            public void onClick(View view){
+                createMenuBuilder.dismiss();
+            }
+        });
+
+
+    }
+
+    private void editItemPopup(int i){
+
+    }
 
 
     @Override
@@ -158,4 +199,5 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
+
 }

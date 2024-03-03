@@ -15,6 +15,9 @@ public class FridgeItem {
         this.itemExpiryInt=itemExpiryInt;
         this.itemQuantity = itemQuantity;
     }
+
+
+
     public void setItemName(String input){
         this.itemName = input;
     }
