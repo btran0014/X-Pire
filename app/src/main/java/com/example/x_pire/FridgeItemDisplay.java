@@ -36,8 +36,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
-    private Button btnReturn;
-    private Button btnOpenCamera;
+    private Button btnOpenCamera, btnManualEntry;
     private ListView fridgeItemList;
     private List<FridgeItem> fridgeItems;
     private Spinner sortingType;
@@ -46,7 +45,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fridge_items_list);
-        btnReturn = findViewById(R.id.btnReturn);
+        btnManualEntry = findViewById(R.id.manualEntryBtn);
         btnOpenCamera = findViewById(R.id.cameraBtn);
         fridgeItemList = findViewById(R.id.fridgeItemList);
         fridgeItems = new ArrayList<>();
@@ -59,14 +58,12 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
 
         btnOpenCamera.setOnClickListener(v -> CameraHelper.openCamera(FridgeItemDisplay.this));
-        btnReturn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent returnIntent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(returnIntent);
-                finish();
+        btnManualEntry.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+
             }
         });
+
 
         FridgeItemAdapter.OnQuantityDecreaseListener listener = new FridgeItemAdapter.OnQuantityDecreaseListener() {
             @Override
@@ -82,6 +79,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         fridgeItemAdapter.setOnQuantityDecreaseListener(listener);
         fridgeItemList.setAdapter(fridgeItemAdapter);
     }
+
 
 
     @Override
@@ -101,7 +99,6 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         CameraHelper.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
     }
     private void removeFridgeItem(int i){
-        //POSSIBLE ERROR
         FridgeItem currentItem = fridgeItems.get(i);
         DatabaseReference dR = FirebaseDatabase.getInstance().getReference("fridgeItems").child(currentItem.getItemID());
         dR.removeValue();

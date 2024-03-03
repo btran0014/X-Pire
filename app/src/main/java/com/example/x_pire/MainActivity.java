@@ -10,13 +10,6 @@ import android.widget.Button;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
 
 public class MainActivity extends AppCompatActivity {
     Button btnFridgeContents, btnOpenCamera;
@@ -26,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnFridgeContents = findViewById(R.id.viewListBtn);
+        btnFridgeContents = findViewById(R.id.manualEntryBtn);
         btnOpenCamera = findViewById(R.id.cameraBtn);
 
         btnFridgeContents.setOnClickListener(new View.OnClickListener() {
