@@ -2,10 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#fefae0</color>
-    <color name="lightgreen">#606c38</color>
-    <color name="darkgreen">#283618</color>
-    <color name="lightbrown">#dda15e</color>
-    <color name="darkbrown">#bc6c25</color>
+    <color name="lightgreen">#219ebc</color>
+    <color name="darkgreen">#023047</color>
+    <color name="lightbrown">#ffb703</color>
+    <color name="darkbrown">#fb8500</color>
+    <color name="lightblue">#8ecae6</color>
 
 
 </resources>
