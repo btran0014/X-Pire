@@ -46,7 +46,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fridge_items_list);
-        btnReturn = (Button) findViewById(R.id.btnReturn);
+        btnReturn = findViewById(R.id.btnReturn);
         btnOpenCamera = findViewById(R.id.cameraBtn);
         fridgeItemList = findViewById(R.id.fridgeItemList);
         fridgeItems = new ArrayList<>();
@@ -57,6 +57,7 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
         fridgeItemDatabase = FirebaseDatabase.getInstance().getReference("fridgeItems");
+
         btnOpenCamera.setOnClickListener(v -> CameraHelper.openCamera(FridgeItemDisplay.this));
         btnReturn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,15 +68,19 @@ public class FridgeItemDisplay extends AppCompatActivity implements AdapterView.
             }
         });
 
-
-        fridgeItemList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        FridgeItemAdapter.OnQuantityDecreaseListener listener = new FridgeItemAdapter.OnQuantityDecreaseListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-                removeFridgeItem(i);
-                return true;
+            public void onQuantityDecrease(int position) {
+                // Update the quantity in Firebase database
+                FridgeItem currentItem = fridgeItems.get(position);
+                fridgeItemDatabase.child(currentItem.getItemID()).child("itemQuantity").setValue(currentItem.getItemQuantity());
             }
-        });
+        };
 
+        // Set the listener to the adapter
+        FridgeItemAdapter fridgeItemAdapter = new FridgeItemAdapter(this, fridgeItems);
+        fridgeItemAdapter.setOnQuantityDecreaseListener(listener);
+        fridgeItemList.setAdapter(fridgeItemAdapter);
     }
 
 
