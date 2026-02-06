@@ -125,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('X-Pire'),
@@ -141,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.kitchen_outlined,
                 size: 120,
-                color: Theme.of(context).primaryColor.withOpacity(0.6),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
               ),
               const SizedBox(height: 32),
               const Text(
