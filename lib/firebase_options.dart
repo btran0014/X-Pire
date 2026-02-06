@@ -43,21 +43,26 @@ class DefaultFirebaseOptions {
 
   // TODO: Replace with your actual Firebase configuration
   // Run: flutter pub global activate flutterfire_cli
-  // Then: flutterfire configure
+
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDcqn0HCH1T2U8bbWr1qOi3AL8llqtP2nA',
+    appId: '1:871275592843:android:1446d9d2e95c3d37c9288e',
+    messagingSenderId: '871275592843',
+    projectId: 'x-pire-2e0c5',
+    databaseURL: 'https://x-pire-2e0c5-default-rtdb.firebaseio.com',
+    storageBucket: 'x-pire-2e0c5.firebasestorage.app',
   );
 
+  // Then: flutterfire configure
+
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyBn6EaTwkCMyQjbMY6Gf1LnA-V_T-fTrj0',
+    appId: '1:871275592843:ios:d178a4d208ffcf33c9288e',
+    messagingSenderId: '871275592843',
+    projectId: 'x-pire-2e0c5',
+    databaseURL: 'https://x-pire-2e0c5-default-rtdb.firebaseio.com',
+    storageBucket: 'x-pire-2e0c5.firebasestorage.app',
     iosBundleId: 'com.example.xPire',
   );
+
 }

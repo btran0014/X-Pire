@@ -1,0 +1,5 @@
+rootProject.name = 'x_pire'
+
+include ':app'
+
+apply from: file('../.flutter-plugins-dependencies')
