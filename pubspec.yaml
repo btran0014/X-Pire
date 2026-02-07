@@ -17,9 +17,10 @@ dependencies:
   provider: ^6.1.1
   
   # Firebase
-  firebase_core: ^2.24.2
-  firebase_storage: ^11.6.0
-  cloud_firestore: ^4.14.0
+  firebase_core: ^2.32.0
+  firebase_storage: ^11.6.5
+  cloud_firestore: ^4.17.0
+  firebase_auth: ^4.16.0
   
   # Camera & Image
   image_picker: ^1.0.7
@@ -42,7 +43,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  fonts:
-    - family: Alata
-      fonts:
-        - asset: fonts/Alata-Regular.ttf
+  # Note: custom font removed because the font file is missing
+  # fonts:
+  #   - family: Alata
+  #     fonts:
+  #       - asset: fonts/Alata-Regular.ttf

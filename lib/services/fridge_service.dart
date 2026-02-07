@@ -54,9 +54,12 @@ class FridgeService extends ChangeNotifier {
   /// Add a new fridge item
   Future<void> addItem(FridgeItem item) async {
     try {
-      final docRef = await _firestore.collection(_collection).add(item.toMap());
+      final docRef = await _firestore
+          .collection(_collection)
+          .add(item.toMap());
       final newItem = item.copyWith(itemId: docRef.id);
       _items.add(newItem);
+      _error = null;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to add item: $e';
@@ -76,6 +79,7 @@ class FridgeService extends ChangeNotifier {
       final index = _items.indexWhere((i) => i.itemId == item.itemId);
       if (index != -1) {
         _items[index] = item;
+        _error = null;
         notifyListeners();
       }
     } catch (e) {
@@ -88,8 +92,12 @@ class FridgeService extends ChangeNotifier {
   /// Delete a fridge item
   Future<void> deleteItem(String itemId) async {
     try {
-      await _firestore.collection(_collection).doc(itemId).delete();
+      await _firestore
+          .collection(_collection)
+          .doc(itemId)
+          .delete();
       _items.removeWhere((item) => item.itemId == itemId);
+      _error = null;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to delete item: $e';

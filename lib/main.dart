@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/home_screen.dart';
 import 'services/fridge_service.dart';
 import 'firebase_options.dart';
@@ -10,6 +11,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  try {
+    await FirebaseAuth.instance.signInAnonymously();
+  } catch (e) {
+    // keep going; writes may still fail if rules disallow authenticated users
+    debugPrint('Anonymous sign-in failed: $e');
+  }
   runApp(const XPireApp());
 }
 
