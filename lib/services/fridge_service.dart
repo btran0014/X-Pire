@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../models/fridge_item.dart';
 
 class FridgeService extends ChangeNotifier {
@@ -54,9 +55,20 @@ class FridgeService extends ChangeNotifier {
   /// Add a new fridge item
   Future<void> addItem(FridgeItem item) async {
     try {
-      final docRef = await _firestore.collection(_collection).add(item.toMap());
+      // Add a timeout to prevent infinite loading
+      final docRef = await _firestore
+          .collection(_collection)
+          .add(item.toMap())
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw TimeoutException(
+              'Firestore write timeout after 10 seconds',
+              const Duration(seconds: 10),
+            ),
+          );
       final newItem = item.copyWith(itemId: docRef.id);
       _items.add(newItem);
+      _error = null;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to add item: $e';
@@ -71,11 +83,19 @@ class FridgeService extends ChangeNotifier {
       await _firestore
           .collection(_collection)
           .doc(item.itemId)
-          .update(item.toMap());
+          .update(item.toMap())
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw TimeoutException(
+              'Firestore update timeout after 10 seconds',
+              const Duration(seconds: 10),
+            ),
+          );
       
       final index = _items.indexWhere((i) => i.itemId == item.itemId);
       if (index != -1) {
         _items[index] = item;
+        _error = null;
         notifyListeners();
       }
     } catch (e) {
@@ -88,8 +108,19 @@ class FridgeService extends ChangeNotifier {
   /// Delete a fridge item
   Future<void> deleteItem(String itemId) async {
     try {
-      await _firestore.collection(_collection).doc(itemId).delete();
+      await _firestore
+          .collection(_collection)
+          .doc(itemId)
+          .delete()
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw TimeoutException(
+              'Firestore delete timeout after 10 seconds',
+              const Duration(seconds: 10),
+            ),
+          );
       _items.removeWhere((item) => item.itemId == itemId);
+      _error = null;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to delete item: $e';
