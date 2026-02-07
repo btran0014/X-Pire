@@ -34,7 +34,6 @@ class XPireApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.green,
-          fontFamily: 'Alata',
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.green,
@@ -47,7 +46,6 @@ class XPireApp extends StatelessWidget {
         ),
         darkTheme: ThemeData(
           primarySwatch: Colors.green,
-          fontFamily: 'Alata',
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.green,
