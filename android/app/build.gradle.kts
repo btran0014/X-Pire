@@ -39,6 +39,11 @@ android {
     }
 }
 
+dependencies {
+    // Force okio 3.x to fix gRPC/Firestore okio version mismatch
+    implementation("com.squareup.okio:okio:3.6.0")
+}
+
 flutter {
     source = "../.."
 }
