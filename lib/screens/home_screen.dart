@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io';
 import 'fridge_items_screen.dart';
+import 'receipt_review_screen.dart';
 import '../services/camera_service.dart';
 import '../services/ml_service.dart';
 
@@ -30,21 +31,20 @@ class _HomeScreenState extends State<HomeScreen> {
       final image = await _cameraService.takePhoto();
       
       if (image != null && mounted) {
-        // Process image with ML Kit to extract text
-        final extractedText = await _mlService.extractTextFromImage(image.path);
-        
-        if (extractedText.isNotEmpty) {
-          // Parse expiry date from extracted text
-          final expiryDate = _mlService.parseExpiryDate(extractedText);
-          
-          if (expiryDate != null && mounted) {
-            _showSuccessDialog(expiryDate, extractedText);
-          } else if (mounted) {
-            _showManualEntryDialog(extractedText);
-          }
-        } else if (mounted) {
-          _showErrorDialog('No text detected in image. Please try again.');
+        final recognizedItems = await _mlService.processReceiptImage(image.path);
+        if (!mounted) return;
+
+        if (recognizedItems.isEmpty) {
+          _showErrorDialog('No items detected on the receipt. Please try again.');
+          return;
         }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReceiptReviewScreen(items: recognizedItems),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -55,49 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _isProcessing = false);
       }
     }
-  }
-
-  void _showSuccessDialog(DateTime expiryDate, String extractedText) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Expiry Date Detected'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Found expiry date: ${expiryDate.month}/${expiryDate.day}/${expiryDate.year}'),
-            const SizedBox(height: 8),
-            Text('Extracted text:\n$extractedText', style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showManualEntryDialog(String extractedText) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Manual Entry Required'),
-        content: Text('Detected text:\n$extractedText\n\nCouldn\'t parse expiry date. Please enter manually.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _navigateToFridgeItems();
-            },
-            child: const Text('Manual Entry'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showErrorDialog(String message) {
@@ -159,8 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildActionButton(
                 context: context,
                 icon: Platform.isIOS ? CupertinoIcons.camera : Icons.add_a_photo,
-                label: 'Scan with Camera',
-                subtitle: 'Auto-detect expiry dates',
+                label: 'Scan Receipt',
+                subtitle: 'Find items and predict expiry dates',
                 onPressed: _isProcessing ? null : _openCamera,
                 isPrimary: true,
               ),

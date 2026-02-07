@@ -1,9 +1,32 @@
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'openai_service.dart';
+
+class RecognizedItem {
+  final String itemName;
+  final DateTime? predictedExpiryDate;
+  final String? matchedProductName;
+  final String? storage;
+  final double? confidence;
+  final String? sourceNote;
+  final int? shelfLifeDays;
+
+  RecognizedItem({
+    required this.itemName,
+    required this.predictedExpiryDate,
+    required this.matchedProductName,
+    required this.storage,
+    required this.confidence,
+    required this.sourceNote,
+    required this.shelfLifeDays,
+  });
+}
 
 class MLService {
   TextRecognizer? _textRecognizer;
+  final OpenAIService _openAIService;
 
-  MLService() {
+  MLService({OpenAIService? openAIService})
+      : _openAIService = openAIService ?? OpenAIService() {
     _textRecognizer = TextRecognizer();
   }
 
@@ -19,124 +42,93 @@ class MLService {
     }
   }
 
-  /// Parse expiry date from extracted text
-  /// Supports formats: MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD, etc.
-  DateTime? parseExpiryDate(String text) {
-    // Common patterns for expiry dates
-    final patterns = [
-      // MM/DD/YYYY or MM-DD-YYYY
-      RegExp(r'\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12][0-9]|3[01])[-/](\d{4})\b'),
-      // DD/MM/YYYY or DD-MM-YYYY
-      RegExp(r'\b(0?[1-9]|[12][0-9]|3[01])[-/](0?[1-9]|1[0-2])[-/](\d{4})\b'),
-      // YYYY-MM-DD or YYYY/MM/DD
-      RegExp(r'\b(\d{4})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12][0-9]|3[01])\b'),
-      // Month names: "Jan 15, 2026" or "January 15 2026"
-      RegExp(r'\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[,\s]+(\d{4})\b', caseSensitive: false),
-      // "EXP" or "Exp" or "Best Before" followed by date
-      RegExp(r'(?:EXP|Exp|BEST\s*BEFORE|Best\s*Before|USE\s*BY|Use\s*By)[:\s]*(0?[1-9]|1[0-2])[-/](0?[1-9]|[12][0-9]|3[01])[-/](\d{4})', caseSensitive: false),
-    ];
+  /// Process a receipt image to extract food items and predict expiry dates
+  /// Returns a list of recognized items with predicted expiry dates
+  Future<List<RecognizedItem>> processReceiptImage(String imagePath) async {
+    try {
+      // Extract text from the receipt
+      final receiptText = await extractTextFromImage(imagePath);
+      
+      // Parse food items from the receipt text
+      final items = _parseReceiptItems(receiptText);
+      
+      final recognizedItems = <RecognizedItem>[];
+      for (final itemName in items) {
+        final lookup = await _openAIService.lookupProductExpiry(itemName);
+        final predicted = (lookup.shelfLifeDays != null)
+            ? DateTime.now().add(Duration(days: lookup.shelfLifeDays!))
+            : null;
 
-    for (final pattern in patterns) {
-      final match = pattern.firstMatch(text);
-      if (match != null) {
-        try {
-          DateTime? date = _parseMatchedDate(match);
-          if (date != null && _isReasonableExpiryDate(date)) {
-            return date;
-          }
-        } catch (e) {
-          continue;
-        }
+        recognizedItems.add(
+          RecognizedItem(
+            itemName: itemName,
+            predictedExpiryDate: predicted,
+            matchedProductName: lookup.productName,
+            storage: lookup.storage,
+            confidence: lookup.confidence,
+            sourceNote: lookup.sourceNote,
+            shelfLifeDays: lookup.shelfLifeDays,
+          ),
+        );
+      }
+
+      return recognizedItems;
+    } catch (e) {
+      throw Exception('Failed to process receipt: $e');
+    }
+  }
+
+  /// Parse receipt text to extract food item names
+  /// This looks for common food items, avoiding prices, quantities, and receipts metadata
+  List<String> _parseReceiptItems(String text) {
+    final items = <String>{};
+    final lines = text.split('\n');
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+      
+      // Skip empty lines, lines with only numbers, total lines, etc.
+      if (trimmed.isEmpty || 
+          trimmed.replaceAll(RegExp(r'[0-9.,]'), '').isEmpty ||
+          trimmed.toLowerCase().contains('total') ||
+          trimmed.toLowerCase().contains('subtotal') ||
+          trimmed.toLowerCase().contains('tax') ||
+          trimmed.length < 3) {
+        continue;
+      }
+
+      // Extract potential item names (remove prices and quantities)
+      final cleanedItem = _cleanItemName(trimmed);
+      
+      if (cleanedItem.isNotEmpty && cleanedItem.length >= 3) {
+        items.add(cleanedItem);
       }
     }
 
-    return null;
+    return items.toList();
   }
 
-  DateTime? _parseMatchedDate(RegExpMatch match) {
-    final fullMatch = match.group(0)!;
+  /// Clean a receipt line to extract just the item name
+  /// Removes prices, quantities, and other metadata
+  String _cleanItemName(String line) {
+    // Remove prices (patterns like $19.99, 19.99, etc.)
+    String cleaned = line.replaceAll(RegExp(r'\$?\d+\.?\d*'), '');
     
-    // Handle month name format
-    if (fullMatch.contains(RegExp(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)', caseSensitive: false))) {
-      return _parseMonthNameDate(match);
-    }
-
-    int year, month, day;
-
-    // Determine format based on match groups
-    if (match.groupCount >= 3) {
-      final g1 = int.parse(match.group(1)!);
-      final g2 = int.parse(match.group(2)!);
-      final g3 = int.parse(match.group(3)!);
-
-      // YYYY-MM-DD format
-      if (g1 > 1900) {
-        year = g1;
-        month = g2;
-        day = g3;
-      }
-      // MM/DD/YYYY format (common in US)
-      else if (g1 <= 12 && g3 > 1900) {
-        month = g1;
-        day = g2;
-        year = g3;
-      }
-      // DD/MM/YYYY format (common elsewhere)
-      else if (g2 <= 12 && g3 > 1900) {
-        day = g1;
-        month = g2;
-        year = g3;
-      } else {
-        return null;
-      }
-
-      return DateTime(year, month, day);
-    }
-
-    return null;
-  }
-
-  DateTime? _parseMonthNameDate(RegExpMatch match) {
-    final monthMap = {
-      'jan': 1, 'january': 1,
-      'feb': 2, 'february': 2,
-      'mar': 3, 'march': 3,
-      'apr': 4, 'april': 4,
-      'may': 5,
-      'jun': 6, 'june': 6,
-      'jul': 7, 'july': 7,
-      'aug': 8, 'august': 8,
-      'sep': 9, 'september': 9,
-      'oct': 10, 'october': 10,
-      'nov': 11, 'november': 11,
-      'dec': 12, 'december': 12,
-    };
-
-    final monthStr = match.group(1)!.toLowerCase();
-    final day = int.parse(match.group(2)!);
-    final year = int.parse(match.group(3)!);
-
-    final month = monthMap[monthStr];
-    if (month != null) {
-      return DateTime(year, month, day);
-    }
-
-    return null;
-  }
-
-  /// Check if the parsed date is reasonable for an expiry date
-  bool _isReasonableExpiryDate(DateTime date) {
-    final now = DateTime.now();
-    final tenYearsFromNow = now.add(const Duration(days: 3650));
+    // Remove quantities (patterns like "x2", "qty: 3", etc.)
+    cleaned = cleaned.replaceAll(RegExp(r'(?:qty|x|quantity|amount)[\s:]*\d+', caseSensitive: false), '');
     
-    // Expiry date should be between now and 10 years from now
-    // (some items like canned goods can have very long shelf life)
-    return date.isAfter(now.subtract(const Duration(days: 30))) && 
-           date.isBefore(tenYearsFromNow);
+    // Remove extra whitespace
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    
+    // Remove common receipt metadata
+    cleaned = cleaned.replaceAll(RegExp(r'(?:item|#|code|sku|barcode)\s*[:\-]?\s*\w+', caseSensitive: false), '');
+    
+    return cleaned.trim();
   }
 
   /// Dispose of resources
   void dispose() {
     _textRecognizer?.close();
+    _openAIService.dispose();
   }
 }

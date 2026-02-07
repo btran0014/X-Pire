@@ -65,6 +65,24 @@ class FridgeService extends ChangeNotifier {
     }
   }
 
+  /// Add multiple fridge items (useful for bulk receipt processing)
+  Future<void> addMultipleItems(List<FridgeItem> items) async {
+    try {
+      final newItems = <FridgeItem>[];
+      for (final item in items) {
+        final docRef = await _firestore.collection(_collection).add(item.toMap());
+        final newItem = item.copyWith(itemId: docRef.id);
+        newItems.add(newItem);
+      }
+      _items.addAll(newItems);
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to add items: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Update an existing fridge item
   Future<void> updateItem(FridgeItem item) async {
     try {
