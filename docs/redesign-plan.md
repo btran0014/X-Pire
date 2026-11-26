@@ -10,46 +10,54 @@ Expo / React Native app backed by Supabase, replacing the Flutter + Firebase app
 ## 1. Goals
 
 - One TypeScript codebase that runs on Android and iOS.
+- Developed and tested entirely in **Expo Go** on your own phone: no Android Studio, no Xcode, no custom native builds.
 - Each user's data is private (enforced by the database, not the app).
 - No secret keys in the app; AI calls happen server-side.
-- Receipt scanning that works offline for the OCR part and costs ~$0 to run.
+- Receipt scanning that costs ~$0 to run.
 - Expiry reminders that work without a server.
 - $0/month running cost at personal scale.
 
 ## 2. Stack
 
+Every library below runs in Expo Go (no custom native code).
+
 | Layer | Choice | Notes |
 |---|---|---|
-| App framework | Expo (latest SDK), TypeScript strict | Development build (not Expo Go) once ML Kit is added |
+| App framework | Expo (latest SDK), TypeScript strict | Tested in Expo Go |
 | Navigation | Expo Router | File-based routes in `app/` |
 | Server state | TanStack Query | Caching, optimistic updates, refetch |
 | Forms / validation | react-hook-form + zod | zod schemas shared with the edge function |
 | Styling | React Native `StyleSheet` + small theme file | Light/dark via `useColorScheme` |
 | Dates | date-fns | Expiry stored as a calendar date, no time zone bugs |
 | Camera / photos | expo-image-picker | Camera and gallery in one API |
-| OCR | `@react-native-ml-kit/text-recognition` | On-device, free, offline |
+| Image shrinking | expo-image-manipulator | Resize to ~1600 px JPEG before upload |
+| Receipt reading | Gemini Flash-Lite (image input) via Supabase Edge Function | One call reads the receipt and estimates shelf life |
+| Shelf-life fallback | USDA FoodKeeper dataset | Seeded into a Postgres reference table |
 | Notifications | expo-notifications (local, scheduled) | No push server needed |
 | Backend | Supabase (free tier) | Postgres, Auth, Row Level Security, Edge Functions |
-| AI | Gemini Flash-Lite via Supabase Edge Function | Text only, one call per receipt, JSON output |
-| Shelf-life fallback | USDA FoodKeeper dataset | Seeded into a Postgres reference table |
-| Builds | EAS Build (free tier) | |
 | Tests | Jest + React Native Testing Library; Deno tests for the edge function | |
+
+**Why not on-device OCR?** ML Kit text recognition needs a custom development build, which Expo Go
+can't run (and on iPhone that needs a $99/year Apple account). Sending a shrunken photo to Gemini
+replaces OCR + text cleanup with a single call that's still inside the free tier. If you later move
+to development builds, on-device OCR can be added back without changing the rest of the app.
 
 ## 3. Architecture
 
 ```
-Phone (Expo app)
+Phone (Expo Go)
   ├─ expo-image-picker ──> photo
-  ├─ ML Kit OCR (on device) ──> raw receipt text
+  ├─ expo-image-manipulator ──> ~1600 px JPEG (a few hundred KB)
   ├─ supabase-js ──> Edge Function `parse-receipt` (with user's JWT)
-  │                    ├─ Gemini Flash-Lite: text -> [{name, qty, storage, shelf_life_days, confidence}]
-  │                    ├─ FoodKeeper lookup for missing / low-confidence items
-  │                    └─ returns suggestions (does not save items)
+  │                    ├─ Gemini Flash-Lite: image -> [{name, qty, storage, shelf_life_days, confidence}]
+  │                    ├─ FoodKeeper lookup for missing / low-confidence shelf life
+  │                    └─ returns suggestions (does not save items or the photo)
   ├─ Review screen ──> user edits ──> insert into `items` (RLS: own rows only)
   └─ expo-notifications: schedules local reminders from `items`
 ```
 
-The receipt photo never leaves the phone; only OCR text is sent to the server.
+The photo is sent to the edge function and on to Gemini for reading, then discarded. It is never stored
+in Supabase. (On Gemini's free tier, Google may use inputs to improve its products; the paid tier doesn't.)
 
 ## 4. Data model (Postgres)
 
@@ -105,18 +113,24 @@ Decreasing quantity from 1 marks the item `consumed` instead of deleting it.
 
 ## 5. Edge Function: `parse-receipt`
 
-- **Input:** `{ text: string }`, requires a signed-in user's JWT.
-- **Guards:** reject text over ~8,000 chars; rate limit by counting the user's `receipts` rows in the last hour (e.g. max 20).
+- **Input:** `{ image: base64 JPEG }`, requires a signed-in user's JWT.
+- **Guards:** reject images over ~2 MB or that aren't JPEG/PNG; rate limit by counting the user's
+  `receipts` rows in the last hour (e.g. max 20).
 - **Global daily cap** (e.g. 200 calls/day across all users). Anonymous sign-in means anyone with the app
   can create new users, so a per-user limit alone doesn't protect the Gemini quota. Optionally add CAPTCHA
   (Cloudflare Turnstile, supported by Supabase Auth) to anonymous sign-in before any public release.
+- **Gemini call:** one request with the image and a structured JSON output schema:
+  `items: [{ raw_line, name, quantity, storage, shelf_life_days, confidence }]`.
+  Prompt tells the model to read only purchased food lines, expand receipt abbreviations
+  ("GV 2% MLK GAL" -> "Great Value 2% Milk, 1 gal"), and skip store info, totals, tax and payment lines.
 - **Validate the model output** with the same zod schema before returning it; drop anything malformed.
-  Receipt text is untrusted input, so the model's answer is treated as untrusted too.
-- **Gemini call:** one request, structured JSON output with a schema:
-  `items: [{ raw_line, name, quantity, storage, shelf_life_days, confidence, is_food }]`.
-  Prompt tells the model to expand receipt abbreviations ("GV 2% MLK GAL" -> "Great Value 2% Milk, 1 gal") and drop non-food lines.
-- **Fallback:** if Gemini fails or `confidence < 0.5`, match `name` against `shelf_life.keywords`; if still nothing, return the item with no date so the user picks one.
-- **Output:** suggestions with `expires_on` computed from `shelf_life_days`, plus `expiry_source`. Inserts one `receipts` row; does not insert items.
+  Receipt content is untrusted input, so the model's answer is treated as untrusted too.
+- **Shelf-life fallback:** if `shelf_life_days` is missing or `confidence < 0.5`, match `name` against
+  `shelf_life.keywords`; if still nothing, return the item with no date so the user picks one.
+- **If Gemini fails** (quota, outage, unreadable photo): return a clear error; the app offers
+  "Try again" or "Add items manually" (manual add still gets FoodKeeper suggestions).
+- **Output:** suggestions with `expires_on` computed from `shelf_life_days`, plus `expiry_source`.
+  Inserts one `receipts` row; does not insert items; never stores the image.
 - **Secret:** `GEMINI_API_KEY` set with `supabase secrets set` (🧑).
 - Model name is a constant in one file so switching providers is a one-line change.
 
@@ -133,7 +147,7 @@ app/
   (tabs)/_layout.tsx
   (tabs)/index.tsx         Inventory: Expired / Expiring soon / Fresh sections, +/- qty,
                            swipe to mark consumed or discarded, filter by storage
-  (tabs)/scan.tsx          Take photo / pick from gallery -> OCR -> parse-receipt
+  (tabs)/scan.tsx          Take photo / pick from gallery -> shrink -> parse-receipt
   (tabs)/settings.tsx      Reminder time and lead days, account, export/delete data
   scan/review.tsx          Editable suggestions: name, qty, storage, expiry date, include toggle
   item/new.tsx             Manual add with FoodKeeper autocomplete that pre-fills expiry
@@ -142,6 +156,7 @@ app/
 
 ## 7. Notifications
 
+- Local scheduled notifications (these work in Expo Go; only remote push notifications need a development build).
 - On app start and after any item change, cancel and reschedule local notifications.
 - Default: a reminder at the user's chosen time (e.g. 9:00) N days before `expires_on` (default 2) and on the expiry day.
 - iOS allows only 64 pending local notifications per app: schedule only the soonest ~60, and reschedule each time the app opens.
@@ -149,8 +164,9 @@ app/
 ## 8. Auth
 
 - At launch: Supabase **anonymous sign-in** on first launch, so there is no login screen.
-- Later: "Save your data" in Settings links the anonymous account to email (magic link) or Sign in with Apple / Google.
-  Until linked, data is lost if the app is uninstalled; Settings says so.
+- Later: "Save your data" in Settings links the anonymous account to email (magic link).
+  Sign in with Apple / Google can come later; they need extra native setup.
+  Until linked, data is lost if Expo Go's data is cleared or the app is reinstalled; Settings says so.
 
 ## 9. Repository layout
 
@@ -159,7 +175,7 @@ app/                       Expo Router routes
 src/
   components/
   features/items/          queries, hooks, item card, item form
-  features/scan/           ocr.ts, parseReceipt.ts, review state
+  features/scan/           pickImage.ts, shrinkImage.ts, parseReceipt.ts, review state
   lib/supabase.ts          client (session in AsyncStorage)
   lib/notifications.ts
   lib/dates.ts
@@ -173,37 +189,28 @@ supabase/
   seed.sql                 FoodKeeper data
 scripts/build-foodkeeper-seed.ts
 .github/workflows/ci.yml   typecheck, lint, Jest, Deno tests on every push
-app.config.ts, eas.json, .env.example
+app.config.ts, .env.example
 ```
 
 ## 10. Phases
 
-### Phase 0: Prep
-- 🤖 Tag the current Flutter app as `flutter-final`, create branch `redesign`, remove the Flutter code (it stays in git history).
-- 🤖 Delete the duplicate `Alibranch`/`alibranch` remote branches (with your OK) to stop the Windows fetch error.
-- 🧑 Install Node LTS and Android Studio; create an Android emulator (Google Play image). 🤖 Install Supabase CLI and EAS CLI.
-- 🧑 Create free accounts: Supabase, Expo, Google AI Studio (create a Gemini API key).
+### Phase 0: Prep ✅
+- ✅ Tagged the Flutter app as `flutter-final`; created branch `redesign`; removed the Flutter code.
+- ✅ Cleaned up stale `Alibranch`/`alibranch` refs (already gone from GitHub).
+- ✅ Node 24 present; EAS CLI installed; Supabase CLI runs via `npx` (added as a dev dependency in Phase 1).
+- 🧑 Install **Expo Go** on your phone (Play Store / App Store).
+- 🧑 Create free accounts: Supabase, Expo, Google AI Studio (create a Gemini API key; keep it private).
 
-### Phase 1: App skeleton (runs in Expo Go)
+### Phase 1: App skeleton
 - 🤖 `create-expo-app` with TypeScript, Expo Router tabs, ESLint + Prettier, theme, `.env.example`.
+- 🤖 Add Supabase CLI as a dev dependency.
 - 🤖 GitHub Actions CI: typecheck, lint, tests.
-- 🧑 Start the emulator and press `a` in the Expo terminal to open the app in it (Expo Go installs automatically).
-
-### Phase 1b: OCR spike (de-risk early)
-The riskiest piece is the ML Kit library: community React Native packages sometimes lag behind Expo's
-New Architecture. Before building screens on top of it:
-- 🤖 Add the OCR library to a throwaway screen and configure the development build.
-- 🤖 Build and install the development build on the emulator with `npx expo run:android`
-  (local build, free, no EAS queue). 🧑 `eas login` is only needed later for cloud builds.
-- 🧑 Drag 2–3 receipt photos onto the emulator, pick them in the app, and confirm text comes out.
-- If it doesn't work, switch to an alternative (e.g. a Vision Camera OCR plugin) now, not in Phase 4.
-
-From here on you use the development build instead of Expo Go; JS changes still hot-reload.
+- 🧑 Run `npx expo start`, scan the QR code with your phone (same Wi-Fi as the PC, or use `--tunnel`).
 
 ### Phase 2: Backend
-- 🧑 `supabase login` (browser). Create the project (dashboard, or 🤖 via CLI after login).
+- 🧑 `npx supabase login` (browser). Create the project (dashboard, or 🤖 via CLI after login).
 - 🤖 `supabase init`, write migrations + RLS + `updated_at` trigger, `supabase link`, `supabase db push`.
-- 🤖 pgTAP tests proving one user can't touch another's data.
+- 🤖 pgTAP tests proving one user can't touch another's data (these need Docker locally, so they run in CI).
 - 🤖 Build FoodKeeper seed (downloads the public USDA dataset; asks first) and load it.
 - 🤖 Generate `src/types/database.ts`.
 - 🤖 Enable anonymous sign-ins in `config.toml` and push it with `supabase config push`
@@ -212,60 +219,54 @@ From here on you use the development build instead of Expo Go; JS changes still 
 ### Phase 3: Inventory
 - 🤖 Anonymous auth bootstrap, items list with sections, add/edit/delete, quantity, consumed/discarded, FoodKeeper autocomplete.
 - 🤖 Unit tests for date logic and item grouping.
-- 🧑 Try it in the emulator.
+- 🧑 Try it on your phone.
 
 ### Phase 4: Receipt scanning
-- 🤖 Turn the Phase 1b spike into the real scan flow with image picker.
-- 🤖 Write and deploy `parse-receipt` with tests (rate limit, daily cap, output validation); review screen; batch insert.
-- 🧑 `supabase secrets set GEMINI_API_KEY=...`
-- 🧑 Scan 5–10 real receipts; send me the ones that parse badly so I can tune the prompt.
+- 🤖 Scan tab: camera / gallery, shrink image, call `parse-receipt`, review screen, batch insert.
+- 🤖 Write and deploy `parse-receipt` with tests (size limit, rate limit, daily cap, output validation).
+- 🧑 `npx supabase secrets set GEMINI_API_KEY=...`
+- 🧑 Scan 5–10 real receipts; tell me which ones come out wrong so I can tune the prompt.
 
 ### Phase 5: Reminders
 - 🤖 expo-notifications scheduling, settings for time and lead days.
-- 🧑 Allow notifications in the emulator and confirm one arrives (a debug button fires one in 10 seconds).
+- 🧑 Allow notifications on your phone and confirm one arrives (a debug button fires one in 10 seconds).
 
 ### Phase 6: Polish
 - 🤖 Empty/error/offline states, app icon and splash, dark mode check, export (CSV) and delete-my-data (`delete-account` function).
-- 🤖 Account linking (email magic link first).
+- 🤖 Account linking (email magic link).
 - 🤖 README rewrite.
 
 ### Phase 7: Cleanup and release (optional)
 - 🧑 Delete the old Firebase project `x-pire-2e0c5` (its data is not migrated).
-- 🧑 Store accounts if publishing: Google Play ($25 one-time), Apple Developer ($99/year).
-- 🤖 EAS Submit config; EAS Update for over-the-air fixes.
+- Publishing needs real builds (EAS Build, free tier) and store accounts:
+  Google Play ($25 one-time), Apple Developer ($99/year). Not needed for personal use in Expo Go.
 
 ## 11. Costs
 
 | Item | Cost |
 |---|---|
+| Expo Go on your phone | $0 |
 | Supabase free tier | $0 (project pauses after ~7 days idle; one-click restore) |
-| Gemini Flash-Lite free tier | $0 at personal volume (free-tier prompts may be used by Google to improve products) |
-| Expo / EAS free tier | $0 |
-| Android Emulator (Android Studio) | $0 |
-| iOS in a browser (Appetize.io free tier, limited minutes) | $0 |
-| Real iPhone with the development build, no Mac | Apple Developer Program, $99/year |
+| Gemini Flash-Lite free tier | $0 at personal volume |
+| Expo / EAS free tier | $0 (only needed for Phase 7) |
+| Store publishing (optional) | Google Play $25 one-time; Apple $99/year |
 
 ## 12. Risks
 
 | Risk | Mitigation |
 |---|---|
-| ML Kit library incompatible with current Expo / New Architecture | Phase 1b spike before building on it |
+| Expo Go only supports the newest Expo SDK; a new SDK release can stop the project opening | Upgrade the project when Expo Go updates (`npx expo install --fix`); usually a short task |
+| Gemini misreads blurry or long receipts | Image shrink keeps text legible (~1600 px); review screen lets you fix anything; prompt tuning in Phase 4 |
 | Free Supabase project pauses after ~7 days idle, app shows errors | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying |
 | Someone abuses anonymous sign-in to burn the Gemini quota | Per-user rate limit + global daily cap; CAPTCHA before public release |
-| Gemini free-tier terms or model names change | Model name in one constant; FoodKeeper fallback keeps scanning usable without AI |
+| Gemini free-tier terms or model names change | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI |
 | Anonymous users lose data on reinstall | Account linking in Phase 6; warning in Settings until linked |
 | iOS 64 pending-notification limit | Schedule soonest ~60, reschedule on app open |
 
 ## 13. Decisions
 
-1. **Testing device: Android Emulator first (free, runs on Windows).**
-   - Install Android Studio and create an emulator with a **Google Play** system image (Pixel, recent Android).
-   - The development build installs straight onto it (`npx expo run:android`, or the `.apk` from EAS).
-   - Receipt scanning is tested with the gallery: drag receipt photos onto the emulator window to add them,
-     then use "Pick from gallery". The emulator camera can also pass through your webcam.
-   - iOS: the iOS Simulator only runs on macOS, and Expo has no hosted simulator. Options later:
-     an EAS simulator build (no Apple account needed) run in a browser on Appetize.io's free tier,
-     a borrowed Mac, or Expo Go on a real iPhone for the phases before ML Kit.
-   - Real Android phone: optional, free, any time.
+1. **Testing: Expo Go on your own phone.** No Android Studio, emulator, Xcode or custom builds.
+   This is why receipt reading happens server-side with Gemini instead of on-device ML Kit.
+   UI work can also be previewed in a browser with `npx expo start --web` (scanning and notifications won't work there).
 2. **Old data: discarded.** No Firestore migration; the Firebase project is deleted in Phase 7.
-3. **Receipt photos: not stored.** Photos stay on the phone; only OCR text is sent to the server.
+3. **Receipt photos: not stored.** The shrunken photo is sent to the edge function and Gemini for reading, then discarded.
