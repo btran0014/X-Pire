@@ -5,7 +5,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { formToItem, itemToForm } from '@/features/items/form-schema';
+import { formToItem, itemToForm, itemToProduct } from '@/features/items/form-schema';
 import { useDeleteItem, useItem, useUpdateItem } from '@/features/items/hooks';
 import { ItemForm } from '@/features/items/item-form';
 import type { ItemStatus } from '@/features/items/types';
@@ -60,11 +60,15 @@ export default function EditItemScreen() {
     <ItemForm
       key={current.id}
       initialValues={itemToForm(current)}
+      initialProduct={itemToProduct(current)}
       submitLabel="Save changes"
       submitting={update.isPending}
       errorMessage={error ? `Couldn't save: ${error.message}` : null}
-      onSubmit={(values) =>
-        update.mutate({ id: current.id, changes: formToItem(values) }, { onSuccess: close })
+      onSubmit={(values, product) =>
+        update.mutate(
+          { id: current.id, changes: formToItem(values, product) },
+          { onSuccess: close },
+        )
       }
       footer={
         <View style={styles.footer}>

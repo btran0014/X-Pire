@@ -150,15 +150,26 @@ async function callGemini(body: ReturnType<typeof validateRequest>): Promise<str
       signal: AbortSignal.timeout(45_000),
     });
 
-  let res = await send(true);
+  let jsonMode = true;
+  let res = await send(jsonMode);
   // If JSON mode isn't accepted by this endpoint/model, retry once without it; the prompt
   // still asks for JSON and the reply is validated either way.
   if (res.status === 400) {
     const detail = await res.text();
     console.warn('Gemini 400 with JSON mode, retrying without:', detail.slice(0, 500));
-    res = await send(false);
+    jsonMode = false;
+    res = await send(jsonMode);
   }
-  if (res.status === 429) {
+  // Temporary overload ("model is experiencing high demand", 503) or server errors:
+  // retry twice with a short backoff before giving up.
+  for (const delayMs of [800, 2000]) {
+    if (![500, 502, 503, 504].includes(res.status)) break;
+    console.warn('Gemini', res.status, 'retrying in', delayMs, 'ms');
+    await res.body?.cancel();
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    res = await send(jsonMode);
+  }
+  if (res.status === 429 || res.status === 503) {
     throw new RequestError(429, 'ai_busy', 'The AI service is busy. Try again in a minute.');
   }
   if (!res.ok) {

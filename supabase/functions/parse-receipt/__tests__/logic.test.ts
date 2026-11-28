@@ -80,11 +80,22 @@ describe('parseModelOutput', () => {
             storage: 'fridge',
             shelf_life_days: 7,
             confidence: 0.9,
+            brand: 'Great Value',
+            size: ' 1  gal ',
+            upc: '04900002891',
+            emoji: '🥛',
           },
           { name: 'Peas', quantity: '3', storage: 'garage', shelf_life_days: 99999, confidence: 4 },
           { name: '', quantity: 1 },
           'junk',
-          { name: 'Bread', quantity: -5, shelf_life_days: null },
+          {
+            name: 'Bread',
+            quantity: -5,
+            shelf_life_days: null,
+            upc: '1234',
+            emoji: 'bread',
+            brand: 'null',
+          },
         ],
       }) +
       '\n```';
@@ -97,9 +108,33 @@ describe('parseModelOutput', () => {
           storage: 'fridge',
           shelfLifeDays: 7,
           confidence: 0.9,
+          brand: 'Great Value',
+          size: '1 gal',
+          barcode: '0049000028911',
+          emoji: '🥛',
         },
-        { name: 'Peas', quantity: 3, storage: 'fridge', shelfLifeDays: 3650, confidence: 1 },
-        { name: 'Bread', quantity: 1, storage: 'fridge', shelfLifeDays: null, confidence: 0 },
+        {
+          name: 'Peas',
+          quantity: 3,
+          storage: 'fridge',
+          shelfLifeDays: 3650,
+          confidence: 1,
+          brand: null,
+          size: null,
+          barcode: null,
+          emoji: null,
+        },
+        {
+          name: 'Bread',
+          quantity: 1,
+          storage: 'fridge',
+          shelfLifeDays: null,
+          confidence: 0,
+          brand: null,
+          size: null,
+          barcode: null,
+          emoji: null,
+        },
       ],
     });
   });
@@ -125,6 +160,10 @@ describe('toSuggestion', () => {
     storage: 'fridge',
     shelfLifeDays: 2,
     confidence: 0.9,
+    brand: 'Perdue',
+    size: null,
+    barcode: null,
+    emoji: '🍗',
     ...over,
   });
   const usda = {
@@ -140,6 +179,8 @@ describe('toSuggestion', () => {
       expiresOn: '2026-11-30',
       expirySource: 'ai',
       note: null,
+      brand: 'Perdue',
+      emoji: '🍗',
     });
   });
 

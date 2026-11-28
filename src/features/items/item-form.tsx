@@ -21,18 +21,29 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
+import { ItemAvatar } from '@/components/item-avatar';
+import { OffCredit } from '@/components/off-credit';
+
+import { productItemName, type Product } from '../products/openfoodfacts';
+import { openBarcodeScanner, openProductSearch } from '../products/picker';
 import { fetchShelfLifeFor } from './api';
-import { itemFormSchema, type ItemFormValues } from './form-schema';
+import {
+  itemFormSchema,
+  NO_PRODUCT,
+  type ItemFormValues,
+  type ProductDetails,
+} from './form-schema';
 import { useShelfLifeSearch } from './hooks';
 import { shelfLifeDisplayName, suggestExpiry } from './logic';
 import { STORAGE_LABELS, STORAGE_LOCATIONS, type ShelfLife } from './types';
 
 type ItemFormProps = {
   initialValues: ItemFormValues;
+  initialProduct?: ProductDetails;
   submitLabel: string;
   submitting: boolean;
   errorMessage?: string | null;
-  onSubmit: (values: ItemFormValues) => void;
+  onSubmit: (values: ItemFormValues, product: ProductDetails) => void;
   /** Extra actions under the save button (edit screen: used up, thrown out, delete). */
   footer?: ReactNode;
 };
@@ -41,6 +52,7 @@ type Picked = Pick<ShelfLife, 'source_id' | 'name' | 'subtitle'>;
 
 export function ItemForm({
   initialValues,
+  initialProduct = NO_PRODUCT,
   submitLabel,
   submitting,
   errorMessage,
@@ -57,10 +69,14 @@ export function ItemForm({
     name: ['name', 'storage', 'purchasedOn', 'expirySource'],
   });
 
-  // FoodKeeper suggestions while typing a name.
+  // Exact product (barcode / Open Food Facts) or generic emoji.
+  const [product, setProduct] = useState<ProductDetails>(initialProduct);
+
+  // FoodKeeper suggestions while typing a name (or for a picked product's plain name).
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionQuery, setSuggestionQuery] = useState('');
   const [picked, setPicked] = useState<Picked | null>(null);
-  const search = useShelfLifeSearch(showSuggestions ? name : '', storage);
+  const search = useShelfLifeSearch(showSuggestions ? suggestionQuery : '', storage);
 
   // The picked product's entry for the current storage location (re-fetched when storage changes).
   const pickedEntry = useQuery({
@@ -89,9 +105,20 @@ export function ItemForm({
 
   const choose = (entry: ShelfLife) => {
     setPicked({ source_id: entry.source_id, name: entry.name, subtitle: entry.subtitle });
-    setValue('name', shelfLifeDisplayName(entry), { shouldValidate: true });
+    // Keep an exact product's name; otherwise use the USDA name.
+    if (!product.barcode) setValue('name', shelfLifeDisplayName(entry), { shouldValidate: true });
     setValue('expirySource', 'foodkeeper');
     setShowSuggestions(false);
+  };
+
+  const applyProduct = (p: Product) => {
+    setProduct({ barcode: p.barcode, brand: p.brand, imageUrl: p.imageUrl, emoji: null });
+    if (p.name) {
+      setValue('name', productItemName(p), { shouldValidate: true });
+      // Offer USDA expiry suggestions for the plain product name.
+      setSuggestionQuery(p.name);
+      setShowSuggestions(true);
+    }
   };
 
   const fieldStyle = [
@@ -109,6 +136,39 @@ export function ItemForm({
           keyboardShouldPersistTaps="handled"
           // iOS: keep content below the navigation header instead of under it.
           contentInsetAdjustmentBehavior="automatic">
+          {/* Product */}
+          <View style={styles.productRow}>
+            <ItemAvatar
+              name={name}
+              imageUrl={product.imageUrl}
+              emoji={product.imageUrl ? null : product.emoji}
+              size={64}
+            />
+            <View style={styles.productActions}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {product.barcode
+                  ? [product.brand, `Barcode ${product.barcode}`].filter(Boolean).join(' · ')
+                  : 'Add the exact product for its photo'}
+              </ThemedText>
+              <View style={styles.chips}>
+                <Chip
+                  label="Scan barcode"
+                  selected={false}
+                  onPress={() => openBarcodeScanner(applyProduct)}
+                />
+                <Chip
+                  label={product.barcode ? 'Change' : 'Find product'}
+                  selected={false}
+                  onPress={() => openProductSearch(name, applyProduct)}
+                />
+                {product.barcode ? (
+                  <Chip label="Remove" selected={false} onPress={() => setProduct(NO_PRODUCT)} />
+                ) : null}
+              </View>
+            </View>
+          </View>
+          {product.imageUrl ? <OffCredit label="Photo: Open Food Facts (CC BY-SA)" /> : null}
+
           {/* Name + suggestions */}
           <View style={styles.field}>
             <ThemedText type="smallBold">Name</ThemedText>
@@ -120,7 +180,11 @@ export function ItemForm({
                   value={field.value}
                   onChangeText={(text) => {
                     field.onChange(text);
+                    setSuggestionQuery(text);
                     setShowSuggestions(true);
+                    // Recompute the generic emoji from the new name on save.
+                    if (!product.imageUrl && product.emoji)
+                      setProduct((p) => ({ ...p, emoji: null }));
                     if (picked) {
                       setPicked(null);
                       if (expirySource === 'foodkeeper') setValue('expirySource', 'manual');
@@ -143,7 +207,7 @@ export function ItemForm({
                 {formState.errors.name.message}
               </ThemedText>
             ) : null}
-            {showSuggestions && name.trim().length >= 2 ? (
+            {showSuggestions && suggestionQuery.trim().length >= 2 ? (
               <Suggestions
                 loading={search.isFetching}
                 results={search.data ?? []}
@@ -243,7 +307,7 @@ export function ItemForm({
           <Button
             label={submitLabel}
             loading={submitting}
-            onPress={() => void handleSubmit(onSubmit)()}
+            onPress={() => void handleSubmit((values) => onSubmit(values, product))()}
           />
           {footer}
         </ScrollView>
@@ -319,8 +383,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     fontSize: 16,
   },
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  productActions: {
+    flex: 1,
+    gap: Spacing.two,
+  },
   chips: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   row: {

@@ -4,7 +4,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(27);
 
 -- Two users. Inserting into auth.users as postgres is how Supabase tests create users.
 insert into auth.users (id, email, aud, role)
@@ -108,6 +108,24 @@ select throws_ok(
 select lives_ok(
   $$ update public.items set quantity = 2 $$,
   'Alice can update her own item'
+);
+
+select lives_ok(
+  $$ update public.items set barcode = '0049000028911', brand = 'Coca-Cola', emoji = '🥤',
+       image_url = 'https://images.openfoodfacts.org/images/products/004/900/002/8911/front_en.24.200.jpg' $$,
+  'Items can store product details'
+);
+
+select throws_ok(
+  $$ update public.items set image_url = 'https://evil.example/tracker.png' $$,
+  '23514', null,
+  'Product photos must come from Open Food Facts'
+);
+
+select throws_ok(
+  $$ update public.items set barcode = '12ab' $$,
+  '23514', null,
+  'Barcodes must be 8-14 digits'
 );
 
 select has_trigger('public', 'items', 'items_set_updated_at', 'items has the updated_at trigger');

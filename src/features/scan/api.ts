@@ -15,6 +15,10 @@ export type ScannedItem = {
   expirySource: ExpirySource;
   confidence: number;
   note: string | null;
+  brand: string | null;
+  size: string | null;
+  barcode: string | null;
+  emoji: string | null;
 };
 
 export type ScanResult = {

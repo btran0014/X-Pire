@@ -39,6 +39,8 @@ export default function RootLayout() {
                 name="scan/review"
                 options={{ title: 'Review items', headerBackTitle: 'Scan' }}
               />
+              <Stack.Screen name="product/scan" options={{ title: 'Scan barcode' }} />
+              <Stack.Screen name="product/find" options={{ title: 'Find product' }} />
             </Stack>
           </AuthGate>
         </AuthProvider>

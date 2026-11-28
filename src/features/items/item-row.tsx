@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ItemAvatar } from '@/components/item-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, type ThemeColor } from '@/constants/theme';
@@ -32,15 +33,18 @@ export function ItemRow({ item }: { item: Item }) {
           style={styles.main}
           accessibilityRole="button"
           accessibilityLabel={`${item.name}, ${expiryLabel(item.expires_on)}. Edit`}>
-          <ThemedText type="smallBold" numberOfLines={1}>
-            {item.name}
-          </ThemedText>
-          <ThemedText type="small" themeColor={STATUS_COLOR[status]}>
-            {expiryLabel(item.expires_on)}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {STORAGE_LABELS[item.storage]}
-          </ThemedText>
+          <ItemAvatar name={item.name} imageUrl={item.image_url} emoji={item.emoji} />
+          <View style={styles.text}>
+            <ThemedText type="smallBold" numberOfLines={1}>
+              {item.name}
+            </ThemedText>
+            <ThemedText type="small" themeColor={STATUS_COLOR[status]}>
+              {expiryLabel(item.expires_on)}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {STORAGE_LABELS[item.storage]}
+            </ThemedText>
+          </View>
         </Pressable>
       </Link>
       <View style={styles.stepper}>
@@ -103,8 +107,14 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+  },
+  text: {
+    flex: 1,
     gap: 2,
   },
   stepper: {

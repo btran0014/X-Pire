@@ -15,8 +15,8 @@ export default function NewItemScreen() {
       submitLabel="Add to fridge"
       submitting={add.isPending}
       errorMessage={add.isError ? `Couldn't save: ${add.error.message}` : null}
-      onSubmit={(values) =>
-        add.mutate(formToItem(values), {
+      onSubmit={(values, product) =>
+        add.mutate(formToItem(values, product), {
           onSuccess: () => (router.canGoBack() ? router.back() : router.replace('/')),
         })
       }

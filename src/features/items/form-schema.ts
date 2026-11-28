@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { addDaysIso, todayIso, type IsoDate } from '@/lib/dates';
 
+import { emojiFor } from '../products/emoji';
 import type { Item, NewItem } from './types';
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date');
@@ -21,6 +22,25 @@ export const itemFormSchema = z
   });
 
 export type ItemFormValues = z.infer<typeof itemFormSchema>;
+
+/** Picked (not typed) details: the exact product and/or a generic emoji. */
+export type ProductDetails = {
+  barcode: string | null;
+  brand: string | null;
+  imageUrl: string | null;
+  emoji: string | null;
+};
+
+export const NO_PRODUCT: ProductDetails = {
+  barcode: null,
+  brand: null,
+  imageUrl: null,
+  emoji: null,
+};
+
+export function itemToProduct(item: Item): ProductDetails {
+  return { barcode: item.barcode, brand: item.brand, imageUrl: item.image_url, emoji: item.emoji };
+}
 
 export function emptyItemForm(today: IsoDate = todayIso()): ItemFormValues {
   return {
@@ -44,7 +64,7 @@ export function itemToForm(item: Item): ItemFormValues {
   };
 }
 
-export function formToItem(values: ItemFormValues): NewItem {
+export function formToItem(values: ItemFormValues, product: ProductDetails = NO_PRODUCT): NewItem {
   return {
     name: values.name.trim(),
     quantity: values.quantity,
@@ -52,5 +72,9 @@ export function formToItem(values: ItemFormValues): NewItem {
     purchased_on: values.purchasedOn,
     expires_on: values.expiresOn,
     expiry_source: values.expirySource,
+    barcode: product.barcode,
+    brand: product.brand,
+    image_url: product.imageUrl,
+    emoji: product.emoji ?? emojiFor(values.name),
   };
 }

@@ -1,6 +1,8 @@
 import type { IsoDate } from '@/lib/dates';
 
 import { itemFormSchema } from '../items/form-schema';
+import { emojiFor } from '../products/emoji';
+import { productItemName, type Product } from '../products/openfoodfacts';
 import type { ExpirySource, NewItem, StorageLocation } from '../items/types';
 import type { ScanResult } from './api';
 
@@ -14,6 +16,10 @@ export type ReviewRow = {
   expirySource: ExpirySource;
   confidence: number;
   note: string | null;
+  brand: string | null;
+  barcode: string | null;
+  imageUrl: string | null;
+  emoji: string | null;
 };
 
 export const scanKey = (receiptId: string) => ['scan', receiptId] as const;
@@ -29,6 +35,10 @@ export function toReviewRows(result: ScanResult): ReviewRow[] {
     expirySource: item.expirySource,
     confidence: item.confidence,
     note: item.note,
+    brand: item.brand,
+    barcode: item.barcode,
+    imageUrl: null,
+    emoji: item.emoji,
   }));
 }
 
@@ -72,8 +82,33 @@ export function rowsToItems(
       expiry_source: v.expirySource,
       confidence: row.expirySource === 'manual' ? null : row.confidence,
       receipt_id: receiptId,
+      brand: row.brand,
+      barcode: row.barcode,
+      image_url: row.imageUrl,
+      emoji: row.emoji ?? emojiFor(v.name),
     });
   }
 
   return { items, errors };
 }
+
+/**
+ * Changes to apply when the user picks (or a printed barcode resolves to) an exact product.
+ * A product with no name (barcode unknown to Open Food Facts) only records the barcode.
+ */
+export function productChanges(
+  product: Product,
+): Pick<ReviewRow, 'barcode' | 'imageUrl' | 'brand'> & { name?: string } {
+  return {
+    barcode: product.barcode,
+    imageUrl: product.imageUrl,
+    brand: product.brand,
+    ...(product.name ? { name: productItemName(product) } : {}),
+  };
+}
+
+export const clearedProduct: Pick<ReviewRow, 'barcode' | 'imageUrl' | 'brand'> = {
+  barcode: null,
+  imageUrl: null,
+  brand: null,
+};

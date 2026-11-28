@@ -14,6 +14,10 @@ describe('itemFormSchema', () => {
       purchased_on: '2026-11-28',
       expires_on: '2026-12-05',
       expiry_source: 'manual',
+      barcode: null,
+      brand: null,
+      image_url: null,
+      emoji: '🥛',
     });
   });
 

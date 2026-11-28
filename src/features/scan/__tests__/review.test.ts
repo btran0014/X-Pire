@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { rowsToItems, toReviewRows, type ReviewRow } from '../review';
+import { productChanges, rowsToItems, toReviewRows, type ReviewRow } from '../review';
 
 const RECEIPT = 'r1';
 const PURCHASED = '2026-11-28';
@@ -18,6 +18,10 @@ const rows: ReviewRow[] = toReviewRows({
       expirySource: 'ai',
       confidence: 0.9,
       note: null,
+      brand: null,
+      size: null,
+      barcode: null,
+      emoji: null,
     },
     {
       name: 'Chicken',
@@ -27,6 +31,10 @@ const rows: ReviewRow[] = toReviewRows({
       expirySource: 'foodkeeper',
       confidence: 0.3,
       note: 'USDA',
+      brand: null,
+      size: null,
+      barcode: null,
+      emoji: null,
     },
     {
       name: 'Mystery',
@@ -36,6 +44,10 @@ const rows: ReviewRow[] = toReviewRows({
       expirySource: 'manual',
       confidence: 0,
       note: 'Pick a date',
+      brand: null,
+      size: null,
+      barcode: null,
+      emoji: null,
     },
   ],
 });
@@ -90,5 +102,57 @@ describe('rowsToItems', () => {
   it('drops the AI confidence once the user sets the date themselves', () => {
     const { items } = rowsToItems([{ ...rows[0]!, expirySource: 'manual' }], PURCHASED, RECEIPT);
     expect(items[0]?.confidence).toBeNull();
+  });
+});
+
+describe('productChanges', () => {
+  it('uses the exact product name, photo and brand', () => {
+    expect(
+      productChanges({
+        barcode: '0894700010137',
+        name: 'Greek Yogurt Nonfat Plain',
+        brand: 'Chobani',
+        size: '32 OZ',
+        imageUrl: 'https://images.openfoodfacts.org/x.jpg',
+      }),
+    ).toEqual({
+      barcode: '0894700010137',
+      name: 'Chobani Greek Yogurt Nonfat Plain',
+      brand: 'Chobani',
+      imageUrl: 'https://images.openfoodfacts.org/x.jpg',
+    });
+  });
+
+  it('keeps the current name when only the barcode is known', () => {
+    const changes = productChanges({
+      barcode: '0049000028911',
+      name: '',
+      brand: null,
+      size: null,
+      imageUrl: null,
+    });
+    expect(changes).not.toHaveProperty('name');
+    expect(changes.barcode).toBe('0049000028911');
+  });
+
+  it('saves product details with the item', () => {
+    const row = {
+      ...rows[0]!,
+      ...productChanges({
+        barcode: '3017620422003',
+        name: 'Nutella',
+        brand: 'Ferrero',
+        size: null,
+        imageUrl: 'https://images.openfoodfacts.org/n.jpg',
+      }),
+    };
+    const { items } = rowsToItems([row], PURCHASED, RECEIPT);
+    expect(items[0]).toMatchObject({
+      name: 'Ferrero Nutella',
+      barcode: '3017620422003',
+      brand: 'Ferrero',
+      image_url: 'https://images.openfoodfacts.org/n.jpg',
+    });
+    expect(items[0]?.emoji).toBe('🍽️'); // generic fallback is still stored
   });
 });

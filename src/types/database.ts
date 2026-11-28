@@ -10,11 +10,15 @@ export type Database = {
     Tables: {
       items: {
         Row: {
+          barcode: string | null;
+          brand: string | null;
           confidence: number | null;
           created_at: string;
+          emoji: string | null;
           expires_on: string;
           expiry_source: Database['public']['Enums']['expiry_source'];
           id: string;
+          image_url: string | null;
           name: string;
           purchased_on: string;
           quantity: number;
@@ -25,11 +29,15 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          barcode?: string | null;
+          brand?: string | null;
           confidence?: number | null;
           created_at?: string;
+          emoji?: string | null;
           expires_on: string;
           expiry_source?: Database['public']['Enums']['expiry_source'];
           id?: string;
+          image_url?: string | null;
           name: string;
           purchased_on: string;
           quantity?: number;
@@ -40,11 +48,15 @@ export type Database = {
           user_id?: string;
         };
         Update: {
+          barcode?: string | null;
+          brand?: string | null;
           confidence?: number | null;
           created_at?: string;
+          emoji?: string | null;
           expires_on?: string;
           expiry_source?: Database['public']['Enums']['expiry_source'];
           id?: string;
+          image_url?: string | null;
           name?: string;
           purchased_on?: string;
           quantity?: number;

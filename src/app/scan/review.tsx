@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -14,13 +14,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
 import { DateField } from '@/components/date-field';
+import { ItemAvatar } from '@/components/item-avatar';
+import { OffCredit } from '@/components/off-credit';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAddItems } from '@/features/items/hooks';
 import { STORAGE_LABELS, STORAGE_LOCATIONS } from '@/features/items/types';
 import type { ScanResult } from '@/features/scan/api';
-import { rowsToItems, scanKey, toReviewRows, type ReviewRow } from '@/features/scan/review';
+import { useBarcodeProduct } from '@/features/products/lookup';
+import { openBarcodeScanner, openProductSearch } from '@/features/products/picker';
+import {
+  clearedProduct,
+  productChanges,
+  rowsToItems,
+  scanKey,
+  toReviewRows,
+  type ReviewRow,
+} from '@/features/scan/review';
 import { useTheme } from '@/hooks/use-theme';
 import { addDaysIso } from '@/lib/dates';
 
@@ -88,6 +99,13 @@ export default function ReviewScreen() {
             />
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListFooterComponent={
+            rows.some((r) => r.imageUrl) ? (
+              <View style={styles.footerCredit}>
+                <OffCredit />
+              </View>
+            ) : undefined
+          }
         />
         <SafeAreaView edges={['bottom']} style={styles.footer}>
           {add.isError ? (
@@ -130,11 +148,21 @@ function ReviewCard({
   const theme = useTheme();
   const dim = row.include ? 1 : 0.5;
 
+  // A barcode printed on the receipt resolves to the exact product (photo, brand, name).
+  const printed = useBarcodeProduct(row.barcode && !row.imageUrl ? row.barcode : null);
+  useEffect(() => {
+    if (printed.data) onChange(productChanges(printed.data));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once when the lookup lands
+  }, [printed.data]);
+
+  const searchQuery = [row.brand, row.name].filter(Boolean).join(' ');
+
   return (
     <ThemedView
       type="backgroundElement"
       style={[styles.card, error ? { borderColor: theme.expired, borderWidth: 2 } : null]}>
       <View style={styles.cardTop}>
+        <ItemAvatar name={row.name} imageUrl={row.imageUrl} emoji={row.emoji} size={48} />
         <TextInput
           value={row.name}
           onChangeText={(name) => onChange({ name })}
@@ -152,6 +180,29 @@ function ReviewCard({
 
       {row.include ? (
         <>
+          <View style={styles.inline}>
+            {row.barcode && printed.isFetching ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                Finding product…
+              </ThemedText>
+            ) : null}
+            <Chip
+              label="Scan barcode"
+              selected={false}
+              onPress={() => openBarcodeScanner((product) => onChange(productChanges(product)))}
+            />
+            <Chip
+              label={row.imageUrl ? 'Change product' : 'Find product'}
+              selected={false}
+              onPress={() =>
+                openProductSearch(searchQuery, (product) => onChange(productChanges(product)))
+              }
+            />
+            {row.barcode || row.imageUrl ? (
+              <Chip label="Use generic" selected={false} onPress={() => onChange(clearedProduct)} />
+            ) : null}
+          </View>
+
           <View style={styles.inline}>
             {STORAGE_LOCATIONS.map((loc) => (
               <Chip
@@ -276,6 +327,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  footerCredit: {
+    marginTop: Spacing.three,
   },
   qty: {
     minWidth: 24,

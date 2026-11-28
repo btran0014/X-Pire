@@ -145,42 +145,29 @@ to delete the calling user; `on delete cascade` removes their items and receipts
 A receipt line like "GV 2% MLK GAL" tells us the kind of product, often the brand and size, but rarely the
 exact product. Accuracy comes in three levels, and every item gets the best one available:
 
-| Level              | How                                                                   | Result                                                                                    |
-| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 1. Exact product   | Barcode scanned with the camera, or a UPC printed on the receipt line | Exact name, brand, size and the real product photo                                        |
-| 2. Likely product  | Gemini's cleaned name + brand searched in the product database        | Top candidates with photos; preselected only if one is a clear winner, otherwise you pick |
-| 3. Generic picture | No product match                                                      | A food emoji chosen by Gemini (🥛 🥚 🍗 🥬), so no item is ever blank                     |
+| Level              | How                                                                             | Result                                                                  |
+| ------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1. Exact product   | Barcode scanned with the camera, or a UPC printed on the receipt line           | Exact name, brand, size and the real product photo                      |
+| 2. Chosen product  | "Find product": one Open Food Facts search when you tap it, results with photos | You pick the right one                                                  |
+| 3. Generic picture | No product                                                                      | A food emoji (from Gemini for receipts, from the name for manual items) |
 
-**Product database: Open Food Facts.** Free and open (data ODbL, photos CC BY-SA, so photos are credited),
-millions of products searchable by barcode or name. Coverage is strongest in Europe and decent in North
-America; store brands and some photos may be missing. USDA FoodData Central (branded US foods with
-barcodes, but no photos) can fill gaps later if needed.
+**Product database: Open Food Facts** (data ODbL, photos CC BY-SA; credited in the app). Facts checked
+against the docs and the live API on 2026-11-28:
 
-**Data model additions**
+- Limits: 15 product reads and 10 searches per minute **per IP**; "per user" when calls come from the app.
+  So all Open Food Facts calls are made **from the phone**, never from a Supabase function (shared IP).
+- Product by barcode: `/api/v2/product/{code}?fields=…` (`status: 1` = found). Full-text search is not in the
+  v2/v3 API; it uses Search-a-licious (`search.openfoodfacts.org/search?q=…`), only on an explicit tap.
+- Product reads are queued about 4.5 s apart (~13/min). Your own earlier items with the same barcode are
+  checked first, so repeat purchases don't call Open Food Facts at all.
 
-```sql
-create table public.products (
-  barcode         text primary key,          -- GTIN/UPC/EAN
-  name            text not null,
-  brand           text,
-  size_label      text,                      -- e.g. "1 gal", "12 ct"
-  image_url       text,
-  image_small_url text,
-  categories      text[] not null default '{}',
-  source          text not null default 'openfoodfacts',
-  fetched_at      timestamptz not null default now()
-);
--- RLS: select for authenticated; writes only from edge functions (secret key).
+**Data model:** product details live on each item (`barcode`, `brand`, `image_url`, `emoji`), not in a shared
+cache table, so one user can never change what another sees. The database only accepts photo URLs from
+`https://images.openfoodfacts.org/` and barcodes of 8 to 14 digits.
 
-alter table public.items
-  add column barcode text references public.products (barcode) on delete set null,
-  add column emoji   text;
-```
-
-**Flow:** `parse-receipt` returns `brand`, `size`, `upc` and `emoji` per line → server looks up printed
-barcodes (exact) and searches by name + brand for the rest via `lookup-product` → the review screen shows
-photos, lets you pick a different candidate, scan the barcode, or keep the emoji. Lookups are cached in
-`products`, so repeat purchases are instant and Open Food Facts' rate limits aren't a problem.
+**Flow:** `parse-receipt` also returns `brand`, `size`, `upc` (validated; a dropped check digit is rebuilt) and
+`emoji` per line → the review screen looks up printed barcodes (exact match: photo, brand and name filled in)
+and offers Scan barcode / Find product / Use generic on every card.
 
 ## 6. Screens (Expo Router)
 
@@ -230,7 +217,6 @@ supabase/
   config.toml
   migrations/              versioned SQL (tables, RLS, indexes)
   functions/parse-receipt/ index.ts, prompt.ts, schema.ts, foodkeeper.ts, tests
-  functions/lookup-product/ Open Food Facts lookups + products cache (Phase 6)
   functions/delete-account/
   tests/                   pgTAP tests for RLS
   seed.sql                 FoodKeeper data
@@ -305,26 +291,16 @@ app.json, .env.example
 - ✅ Settings are stored on the device (each phone schedules its own reminders). Web preview: no-op.
 - ✅ Test notification arrived on your phone.
 
-### Phase 6: Product matching and pictures
+### Phase 6: Product matching and pictures ✅
 
-Goal: every item shows a picture, and the exact product (name, brand, size, photo) whenever it can be known.
-Design in section 5c.
-
-- 🤖 Migration: `products` cache table (barcode, name, brand, size, photo URLs, categories, fetched date;
-  readable by signed-in users, written only by edge functions) and new `items` columns `barcode` and `emoji`;
-  pgTAP tests.
-- 🤖 Edge function `lookup-product`: look up by barcode (exact) or by name + brand (top 5 candidates with photos)
-  in the cache first, then Open Food Facts; caches every result; per-user rate limit; identifies the app to
-  Open Food Facts with a User-Agent (no personal details).
-- 🤖 `parse-receipt` also returns brand, size, the printed barcode/UPC when the receipt shows one, and an emoji;
-  the server matches each line: printed barcode → exact product; otherwise a name search, auto-selected only
-  when one candidate is a clear winner.
-- 🤖 Barcode scanner (expo-camera, works in Expo Go) on the add-item screen and on each review card.
-- 🤖 Review screen: product photo per item, "Not right? Pick the exact product" sheet with candidate photos,
-  "Scan barcode", or "Use generic picture".
-- 🤖 Fridge list and edit screen: product photo (cached with expo-image), emoji when there's no product;
-  "Photo: Open Food Facts" credit where product photos are shown.
-- 🤖 Tests: matching and candidate ranking, emoji fallback, cache behaviour; live checks against Open Food Facts.
+- ✅ Migration: `items.barcode`, `brand`, `image_url` (Open Food Facts images only), `emoji`; pgTAP tests.
+- ✅ Open Food Facts client in the app: barcode lookup (own history first, then Open Food Facts, throttled),
+  search on tap; barcode check-digit validation and repair; brand clean-up.
+- ✅ `parse-receipt` returns brand, size, printed UPC and emoji; Gemini overload (503) retried twice.
+  Live: a receipt with 3 printed UPCs (Diet Coke, Chobani, Nutella) came back with all 3 barcodes right.
+- ✅ Barcode scanner screen (expo-camera, works in Expo Go) and Find product screen with photos.
+- ✅ Review cards, add/edit form and Fridge rows show the product photo or emoji; Open Food Facts credited
+  where photos appear and in Settings → Data sources.
 - 🧑 Scan a few real barcodes and receipts; tell me which products are missing or wrongly matched.
 
 ### Phase 7: Polish
@@ -359,18 +335,18 @@ Design in section 5c.
 
 ## 12. Risks
 
-| Risk                                                                                      | Mitigation                                                                                                |
-| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Expo Go only supports the newest Expo SDK; a new SDK release can stop the project opening | Upgrade the project when Expo Go updates (`npx expo install --fix`); usually a short task                 |
-| Gemini misreads blurry or long receipts                                                   | Image shrink keeps text legible (~1600 px); review screen lets you fix anything; prompt tuning in Phase 4 |
-| Free Supabase project pauses after ~7 days idle, app shows errors                         | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying                 |
-| Someone abuses anonymous sign-in to burn the Gemini quota                                 | Per-user rate limit + global daily cap; CAPTCHA before public release                                     |
-| Gemini free-tier terms or model names change                                              | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI                    |
-| Anonymous users lose data on reinstall                                                    | Account linking in Phase 7; warning in Settings until linked                                              |
-| Product not in Open Food Facts, or no photo                                               | Emoji fallback for every item; barcode scan for exact matches; USDA FoodData Central later if needed      |
-| Wrong product auto-matched from a receipt                                                 | Auto-select only on a clear winner; review screen shows the photo and lets you pick or scan instead       |
-| Open Food Facts rate limits or downtime                                                   | Cache every lookup in `products`; matching is optional, scanning still works without it                   |
-| iOS 64 pending-notification limit                                                         | Schedule soonest ~60, reschedule on app open                                                              |
+| Risk                                                                                      | Mitigation                                                                                                        |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Expo Go only supports the newest Expo SDK; a new SDK release can stop the project opening | Upgrade the project when Expo Go updates (`npx expo install --fix`); usually a short task                         |
+| Gemini misreads blurry or long receipts                                                   | Image shrink keeps text legible (~1600 px); review screen lets you fix anything; prompt tuning in Phase 4         |
+| Free Supabase project pauses after ~7 days idle, app shows errors                         | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying                         |
+| Someone abuses anonymous sign-in to burn the Gemini quota                                 | Per-user rate limit + global daily cap; CAPTCHA before public release                                             |
+| Gemini free-tier terms or model names change                                              | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI                            |
+| Anonymous users lose data on reinstall                                                    | Account linking in Phase 7; warning in Settings until linked                                                      |
+| Product not in Open Food Facts, or no photo                                               | Emoji fallback for every item; barcode scan for exact matches; USDA FoodData Central later if needed              |
+| Wrong product auto-matched from a receipt                                                 | Auto-select only on a clear winner; review screen shows the photo and lets you pick or scan instead               |
+| Open Food Facts rate limits or downtime                                                   | Calls from the phone (per-user limits), queued ~4.5 s apart, own history checked first; scanning works without it |
+| iOS 64 pending-notification limit                                                         | Schedule soonest ~60, reschedule on app open                                                                      |
 
 ## 13. Decisions
 
@@ -379,6 +355,6 @@ Design in section 5c.
    UI work can also be previewed in a browser with `npx expo start --web` (scanning and notifications won't work there).
 2. **Old data: discarded.** No Firestore migration; the Firebase project is deleted in Phase 8.
 3. **Receipt photos: not stored.** The shrunken photo is sent to the edge function and Gemini for reading, then discarded.
-4. **Product data: Open Food Facts**, cached in our own `products` table; barcode scan is the only exact path,
+4. **Product data: Open Food Facts**, called from the phone and stored on each item; barcode scan is the only exact path,
    receipt text gives likely matches, emoji is the fallback.
 5. **App icon:** generated as several options with Gemini; you pick one in Phase 7.
