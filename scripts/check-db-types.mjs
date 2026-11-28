@@ -41,8 +41,38 @@ export function withoutInternalBlock(lines) {
   return [...lines.slice(0, from), ...lines.slice(end + 1)];
 }
 
+// Lines some generator versions emit and others don't, with no schema meaning. A table with real
+// computed fields produces a multi-line block, which is still compared.
+const GENERATOR_NOISE = [/^\s*ComputedFields: never;?\s*$/];
+
 const normalize = async (source) =>
-  withoutInternalBlock((await prettier.format(source, options)).split('\n')).join('\n');
+  withoutInternalBlock((await prettier.format(source, options)).split('\n'))
+    .filter((line) => !GENERATOR_NOISE.some((re) => re.test(line)))
+    .join('\n');
+
+/** Minimal line diff (LCS); fine for a file of a few hundred lines. */
+export function lineDiff(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) {
+      i++;
+      j++;
+    } else if (j < b.length && (i >= a.length || dp[i][j + 1] >= dp[i + 1][j])) {
+      out.push(`+ ${b[j++]}`);
+    } else {
+      out.push(`- ${a[i++]}`);
+    }
+  }
+  return out;
+}
 
 const expected = await normalize(generated);
 const actual = await normalize(readFileSync(FILE, 'utf8'));
@@ -50,15 +80,10 @@ const actual = await normalize(readFileSync(FILE, 'utf8'));
 if (expected === actual) {
   console.log(`${FILE} matches the migrations.`);
 } else {
-  const a = actual.split('\n');
-  const e = expected.split('\n');
-  const length = Math.max(a.length, e.length);
-  const first = Array.from({ length }, (_, i) => i).find((i) => a[i] !== e[i]) ?? 0;
-  console.error(
-    `${FILE} is out of date with supabase/migrations (first difference at line ${first + 1}):`,
-  );
-  console.error(`  committed: ${a[first] ?? '(end of file)'}`);
-  console.error(`  expected:  ${e[first] ?? '(end of file)'}`);
+  const diff = lineDiff(actual.split('\n'), expected.split('\n'));
+  console.error(`${FILE} is out of date with supabase/migrations (- committed, + expected):`);
+  for (const line of diff.slice(0, 60)) console.error(`  ${line}`);
+  if (diff.length > 60) console.error(`  … ${diff.length - 60} more`);
   console.error('Run: npm run db:push && npm run db:types');
   process.exit(1);
 }
