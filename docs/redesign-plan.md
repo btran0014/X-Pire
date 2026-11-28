@@ -215,13 +215,15 @@ app.json, .env.example
 
 ### Phase 2: Backend
 
-- 🧑 `npx supabase login` (browser). Create the project (dashboard, or 🤖 via CLI after login).
-- 🤖 `supabase init`, write migrations + RLS + `updated_at` trigger, `supabase link`, `supabase db push`.
-- 🤖 pgTAP tests proving one user can't touch another's data (these need Docker locally, so they run in CI).
+- ✅ Project `X-pire` (us-east-2) created and linked; `.env` filled in.
+- ✅ `supabase init` (CLI 3.x writes `supabase/config.jsonc`), schema migration with RLS + `updated_at` trigger,
+  pushed with `npm run db:push`; `supabase db lint` clean.
+- ✅ pgTAP tests proving one user can't touch another's data (need Docker, so they run in CI).
+- ✅ `src/types/database.ts` generated from the live schema (`npm run db:types`).
+- 🧑 Enable anonymous sign-ins in the dashboard: Authentication → Sign In / Providers → "Allow anonymous sign-ins".
+  **Don't run `supabase config push`:** `config.jsonc` holds local-dev defaults, and pushing it would turn off
+  email confirmations and MFA on the hosted project.
 - 🤖 Build FoodKeeper seed (downloads the public USDA dataset; asks first) and load it.
-- 🤖 Generate `src/types/database.ts`.
-- 🤖 Enable anonymous sign-ins in `config.toml` and push it with `supabase config push`
-  (🧑 toggle it in the dashboard if that fails); 🧑 copy URL + anon key into `.env`.
 
 ### Phase 3: Inventory
 
