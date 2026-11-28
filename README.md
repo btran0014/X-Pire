@@ -2,6 +2,8 @@
 
 Cross-platform fridge inventory app built with Flutter. Capture photos of receipts to extract food items and automatically predict expiry dates based on food type.
 
+## Authors: Ali, Tim, Brian, Sharav
+
 ## Features
 - **Receipt Capture**: Take photos of shopping receipts with camera
 - **AI-Powered Item Extraction**: Uses ML Kit OCR to read and extract all food items from receipts
