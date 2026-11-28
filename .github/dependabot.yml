@@ -1,0 +1,11 @@
+# Keeps GitHub Actions versions current. npm packages are not managed here: Expo pins
+# SDK-compatible versions, so update those with `npx expo install --fix` instead.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

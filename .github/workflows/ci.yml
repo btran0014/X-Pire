@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main, redesign]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Typecheck, lint, format, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Typecheck edge functions (Deno)
+        run: npm run functions:check
+
+      - name: Lint edge functions (Deno)
+        run: npm run functions:lint
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm test -- --ci
+
+  build:
+    name: Expo bundle and dependency check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Library versions compatible with the Expo SDK, config and common setup problems.
+      - name: Expo doctor
+        run: npx expo-doctor
+
+      # Bundles the app for Android, iOS and web: catches broken imports and platform-specific
+      # files that typecheck alone misses. Dummy env values are enough to bundle.
+      - name: Bundle all platforms
+        run: npx expo export --platform all --output-dir dist
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_KEY: ci-placeholder-key
+
+  database:
+    name: Database migrations, RLS tests and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Starts Postgres only (Supabase image, includes the auth schema) and applies supabase/migrations.
+      - name: Start local database
+        run: npx supabase db start
+
+      - name: RLS tests (pgTAP)
+        run: npx supabase test db
+
+      # src/types/database.ts must match the migrations (fix: npm run db:push && npm run db:types).
+      - name: Database types are up to date
+        run: npm run db:types:check
