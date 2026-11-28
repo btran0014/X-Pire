@@ -12,6 +12,8 @@ expo-env.d.ts
 /ios/
 
 # Native build artifacts
+.kotlin/
+*.pem
 *.jks
 *.keystore
 *.p8
@@ -41,6 +43,9 @@ supabase/.env
 
 # TypeScript
 *.tsbuildinfo
+
+# Local Claude Code config (dev server launchers, local settings)
+.claude/
 
 # Editors and OS
 .vscode/

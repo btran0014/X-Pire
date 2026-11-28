@@ -21,21 +21,21 @@ Expo / React Native app backed by Supabase, replacing the Flutter + Firebase app
 
 Every library below runs in Expo Go (no custom native code).
 
-| Layer | Choice | Notes |
-|---|---|---|
-| App framework | Expo (latest SDK), TypeScript strict | Tested in Expo Go |
-| Navigation | Expo Router | File-based routes in `app/` |
-| Server state | TanStack Query | Caching, optimistic updates, refetch |
-| Forms / validation | react-hook-form + zod | zod schemas shared with the edge function |
-| Styling | React Native `StyleSheet` + small theme file | Light/dark via `useColorScheme` |
-| Dates | date-fns | Expiry stored as a calendar date, no time zone bugs |
-| Camera / photos | expo-image-picker | Camera and gallery in one API |
-| Image shrinking | expo-image-manipulator | Resize to ~1600 px JPEG before upload |
-| Receipt reading | Gemini Flash-Lite (image input) via Supabase Edge Function | One call reads the receipt and estimates shelf life |
-| Shelf-life fallback | USDA FoodKeeper dataset | Seeded into a Postgres reference table |
-| Notifications | expo-notifications (local, scheduled) | No push server needed |
-| Backend | Supabase (free tier) | Postgres, Auth, Row Level Security, Edge Functions |
-| Tests | Jest + React Native Testing Library; Deno tests for the edge function | |
+| Layer               | Choice                                                                | Notes                                               |
+| ------------------- | --------------------------------------------------------------------- | --------------------------------------------------- |
+| App framework       | Expo (latest SDK), TypeScript strict                                  | Tested in Expo Go                                   |
+| Navigation          | Expo Router                                                           | File-based routes in `app/`                         |
+| Server state        | TanStack Query                                                        | Caching, optimistic updates, refetch                |
+| Forms / validation  | react-hook-form + zod                                                 | zod schemas shared with the edge function           |
+| Styling             | React Native `StyleSheet` + small theme file                          | Light/dark via `useColorScheme`                     |
+| Dates               | date-fns                                                              | Expiry stored as a calendar date, no time zone bugs |
+| Camera / photos     | expo-image-picker                                                     | Camera and gallery in one API                       |
+| Image shrinking     | expo-image-manipulator                                                | Resize to ~1600 px JPEG before upload               |
+| Receipt reading     | Gemini Flash-Lite (image input) via Supabase Edge Function            | One call reads the receipt and estimates shelf life |
+| Shelf-life fallback | USDA FoodKeeper dataset                                               | Seeded into a Postgres reference table              |
+| Notifications       | expo-notifications (local, scheduled)                                 | No push server needed                               |
+| Backend             | Supabase (free tier)                                                  | Postgres, Auth, Row Level Security, Edge Functions  |
+| Tests               | Jest + React Native Testing Library; Deno tests for the edge function |                                                     |
 
 **Why not on-device OCR?** ML Kit text recognition needs a custom development build, which Expo Go
 can't run (and on iPhone that needs a $99/year Apple account). Sending a shrunken photo to Gemini
@@ -102,6 +102,7 @@ create table shelf_life (          -- FoodKeeper reference data, read-only
 ```
 
 **Row Level Security**
+
 - `items`: enable RLS; select/insert/update/delete only where `user_id = auth.uid()`.
 - `receipts`: enable RLS; clients may only **select** their own rows. Inserts come from the edge function
   with the service role, so a user can't delete rows to get around the rate limit.
@@ -171,9 +172,11 @@ app/
 ## 9. Repository layout
 
 ```
-app/                       Expo Router routes
 src/
+  app/                     Expo Router routes (every file is a screen)
   components/
+  constants/theme.ts       colors (incl. expired / expiring soon / fresh), spacing
+  hooks/
   features/items/          queries, hooks, item card, item form
   features/scan/           pickImage.ts, shrinkImage.ts, parseReceipt.ts, review state
   lib/supabase.ts          client (session in AsyncStorage)
@@ -189,25 +192,29 @@ supabase/
   seed.sql                 FoodKeeper data
 scripts/build-foodkeeper-seed.ts
 .github/workflows/ci.yml   typecheck, lint, Jest, Deno tests on every push
-app.config.ts, .env.example
+app.json, .env.example
 ```
 
 ## 10. Phases
 
 ### Phase 0: Prep ✅
+
 - ✅ Tagged the Flutter app as `flutter-final`; created branch `redesign`; removed the Flutter code.
 - ✅ Cleaned up stale `Alibranch`/`alibranch` refs (already gone from GitHub).
 - ✅ Node 24 present; EAS CLI installed; Supabase CLI runs via `npx` (added as a dev dependency in Phase 1).
 - 🧑 Install **Expo Go** on your phone (Play Store / App Store).
 - 🧑 Create free accounts: Supabase, Expo, Google AI Studio (create a Gemini API key; keep it private).
 
-### Phase 1: App skeleton
-- 🤖 `create-expo-app` with TypeScript, Expo Router tabs, ESLint + Prettier, theme, `.env.example`.
-- 🤖 Add Supabase CLI as a dev dependency.
-- 🤖 GitHub Actions CI: typecheck, lint, tests.
-- 🧑 Run `npx expo start`, scan the QR code with your phone (same Wi-Fi as the PC, or use `--tunnel`).
+### Phase 1: App skeleton ✅
+
+- ✅ Expo SDK 58 app (TypeScript strict, Expo Router native tabs: Fridge / Scan / Settings), green theme with light/dark.
+- ✅ ESLint (eslint-config-expo) + Prettier, Jest (jest-expo) with tests for the expiry date logic (`src/lib/dates.ts`).
+- ✅ Supabase CLI as a dev dependency; `.env.example`.
+- ✅ GitHub Actions CI: typecheck, lint, format check, tests. `npm run check` runs the same locally.
+- 🧑 Run `npm start`, scan the QR code with Expo Go (same Wi-Fi as the PC, or `npx expo start --tunnel`).
 
 ### Phase 2: Backend
+
 - 🧑 `npx supabase login` (browser). Create the project (dashboard, or 🤖 via CLI after login).
 - 🤖 `supabase init`, write migrations + RLS + `updated_at` trigger, `supabase link`, `supabase db push`.
 - 🤖 pgTAP tests proving one user can't touch another's data (these need Docker locally, so they run in CI).
@@ -217,51 +224,56 @@ app.config.ts, .env.example
   (🧑 toggle it in the dashboard if that fails); 🧑 copy URL + anon key into `.env`.
 
 ### Phase 3: Inventory
+
 - 🤖 Anonymous auth bootstrap, items list with sections, add/edit/delete, quantity, consumed/discarded, FoodKeeper autocomplete.
 - 🤖 Unit tests for date logic and item grouping.
 - 🧑 Try it on your phone.
 
 ### Phase 4: Receipt scanning
+
 - 🤖 Scan tab: camera / gallery, shrink image, call `parse-receipt`, review screen, batch insert.
 - 🤖 Write and deploy `parse-receipt` with tests (size limit, rate limit, daily cap, output validation).
 - 🧑 `npx supabase secrets set GEMINI_API_KEY=...`
 - 🧑 Scan 5–10 real receipts; tell me which ones come out wrong so I can tune the prompt.
 
 ### Phase 5: Reminders
+
 - 🤖 expo-notifications scheduling, settings for time and lead days.
 - 🧑 Allow notifications on your phone and confirm one arrives (a debug button fires one in 10 seconds).
 
 ### Phase 6: Polish
+
 - 🤖 Empty/error/offline states, app icon and splash, dark mode check, export (CSV) and delete-my-data (`delete-account` function).
 - 🤖 Account linking (email magic link).
 - 🤖 README rewrite.
 
 ### Phase 7: Cleanup and release (optional)
+
 - 🧑 Delete the old Firebase project `x-pire-2e0c5` (its data is not migrated).
 - Publishing needs real builds (EAS Build, free tier) and store accounts:
   Google Play ($25 one-time), Apple Developer ($99/year). Not needed for personal use in Expo Go.
 
 ## 11. Costs
 
-| Item | Cost |
-|---|---|
-| Expo Go on your phone | $0 |
-| Supabase free tier | $0 (project pauses after ~7 days idle; one-click restore) |
-| Gemini Flash-Lite free tier | $0 at personal volume |
-| Expo / EAS free tier | $0 (only needed for Phase 7) |
-| Store publishing (optional) | Google Play $25 one-time; Apple $99/year |
+| Item                        | Cost                                                      |
+| --------------------------- | --------------------------------------------------------- |
+| Expo Go on your phone       | $0                                                        |
+| Supabase free tier          | $0 (project pauses after ~7 days idle; one-click restore) |
+| Gemini Flash-Lite free tier | $0 at personal volume                                     |
+| Expo / EAS free tier        | $0 (only needed for Phase 7)                              |
+| Store publishing (optional) | Google Play $25 one-time; Apple $99/year                  |
 
 ## 12. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Expo Go only supports the newest Expo SDK; a new SDK release can stop the project opening | Upgrade the project when Expo Go updates (`npx expo install --fix`); usually a short task |
-| Gemini misreads blurry or long receipts | Image shrink keeps text legible (~1600 px); review screen lets you fix anything; prompt tuning in Phase 4 |
-| Free Supabase project pauses after ~7 days idle, app shows errors | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying |
-| Someone abuses anonymous sign-in to burn the Gemini quota | Per-user rate limit + global daily cap; CAPTCHA before public release |
-| Gemini free-tier terms or model names change | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI |
-| Anonymous users lose data on reinstall | Account linking in Phase 6; warning in Settings until linked |
-| iOS 64 pending-notification limit | Schedule soonest ~60, reschedule on app open |
+| Risk                                                                                      | Mitigation                                                                                                |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Expo Go only supports the newest Expo SDK; a new SDK release can stop the project opening | Upgrade the project when Expo Go updates (`npx expo install --fix`); usually a short task                 |
+| Gemini misreads blurry or long receipts                                                   | Image shrink keeps text legible (~1600 px); review screen lets you fix anything; prompt tuning in Phase 4 |
+| Free Supabase project pauses after ~7 days idle, app shows errors                         | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying                 |
+| Someone abuses anonymous sign-in to burn the Gemini quota                                 | Per-user rate limit + global daily cap; CAPTCHA before public release                                     |
+| Gemini free-tier terms or model names change                                              | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI                    |
+| Anonymous users lose data on reinstall                                                    | Account linking in Phase 6; warning in Settings until linked                                              |
+| iOS 64 pending-notification limit                                                         | Schedule soonest ~60, reschedule on app open                                                              |
 
 ## 13. Decisions
 
