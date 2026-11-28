@@ -77,7 +77,12 @@ export function lineDiff(a, b) {
 const expected = await normalize(generated);
 const actual = await normalize(readFileSync(FILE, 'utf8'));
 
-if (expected === actual) {
+// Compare ignoring whitespace: Prettier keeps an object type on several lines if the input had a
+// line break, so the same types can wrap differently depending on which generator produced them.
+// Also ignore the optional `;` / `,` before a closing bracket, which differs between the two forms.
+const squash = (text) => text.replace(/\s+/g, '').replace(/[;,](?=[}\]])/g, '');
+
+if (squash(expected) === squash(actual)) {
   console.log(`${FILE} matches the migrations.`);
 } else {
   const diff = lineDiff(actual.split('\n'), expected.split('\n'));

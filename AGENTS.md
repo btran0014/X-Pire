@@ -4,7 +4,7 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 - Plan and current phase: `docs/redesign-plan.md`. Backend is Supabase (`supabase/`), AI runs only in Supabase Edge Functions.
 - The app must keep running in **Expo Go**: do not add libraries that need a development build.
-- Never put secret keys in the app. Only `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` belong in `.env`.
+- Never put secret keys in the app. Only `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_KEY` (the publishable key) belong in `.env`.
 - Expiry dates are calendar dates (`yyyy-MM-dd`); use the helpers in `src/lib/dates.ts`.
 - Before finishing a change, run `npm run check` (typecheck, lint, format, tests).
 
