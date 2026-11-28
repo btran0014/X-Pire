@@ -51,18 +51,25 @@ If your phone can't reach the PC, use `npx expo start --tunnel`. `npm run web` p
    ```
 2. Copy the project URL and the **publishable** key (Project Settings → API Keys) into `.env`.
 3. Dashboard → **Authentication → Sign In / Providers**: turn on **Allow anonymous sign-ins**.
-4. Dashboard → **Authentication → Email Templates**: add `{{ .Token }}` to two templates so emails contain a
-   code (links don't open the app in Expo Go):
-   - **Magic link**: e.g. `<h2>Your X-Pire code</h2><p>Enter this code in the app: <strong>{{ .Token }}</strong></p>`
-   - **Change email address**: e.g. `<h2>Save your X-Pire data</h2><p>Enter this code in the app to confirm {{ .NewEmail }}: <strong>{{ .Token }}</strong></p>`
+4. Email codes (the app asks for an emailed code; links are fragile in Expo Go). Supabase only allows
+   template changes with custom SMTP, so:
+   - Dashboard → **Authentication → Emails → SMTP Settings**: enable custom SMTP. For example Resend:
+     host `smtp.resend.com`, port `465`, user `resend`, password = your Resend API key, sender
+     `onboarding@resend.dev`. Without your own verified domain, Resend only delivers to your own Resend email.
+   - Push the code templates in `supabase/templates/` (check that only template changes are pending first):
+     ```bash
+     npx supabase config diff
+     npx supabase config push
+     ```
 5. Receipt scanning: create a Gemini API key in [Google AI Studio](https://aistudio.google.com), then
    ```bash
    npx supabase secrets set GEMINI_API_KEY=your-key
    npm run functions:deploy
    ```
 
-Don't run `supabase config push`: `supabase/config.jsonc` holds local-development defaults and would weaken
-the hosted project's auth settings.
+`supabase/config.jsonc` mirrors the hosted project's settings, so `config push` only sends intended changes.
+Always run `npx supabase config diff` first. SMTP settings live only in the dashboard (the API key never goes
+through the repo), and pushes leave them untouched.
 
 ## Develop
 

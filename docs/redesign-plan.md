@@ -251,8 +251,8 @@ app.json, .env.example
 - ✅ pgTAP tests proving one user can't touch another's data (need Docker, so they run in CI).
 - ✅ `src/types/database.ts` generated from the live schema (`npm run db:types`).
 - 🧑 Enable anonymous sign-ins in the dashboard: Authentication → Sign In / Providers → "Allow anonymous sign-ins".
-  **Don't run `supabase config push`:** `config.jsonc` holds local-dev defaults, and pushing it would turn off
-  email confirmations and MFA on the hosted project.
+  (Later, in Phase 7, `config.jsonc` was synced to mirror the hosted project, so `config push` is safe after
+  checking `config diff`.)
 - ✅ FoodKeeper loaded: `scripts/build-foodkeeper-migration.mjs` turns the USDA JSON (downloaded in a browser;
   the server blocks scripts) into a migration. 1,070 rows / 661 products; 57 rows are advice only
   (e.g. milk: "use the package date"). The raw file is not committed.
@@ -303,7 +303,7 @@ app.json, .env.example
   where photos appear and in Settings → Data sources.
 - 🧑 Scan a few real barcodes and receipts; tell me which products are missing or wrongly matched.
 
-### Phase 7: Polish ✅ (email codes need your template change)
+### Phase 7: Polish ✅
 
 - ✅ Save a guest account to an email (`updateUser` + 8-digit code, `verifyOtp` type `email_change`) so items
   carry over; sign in on another phone (`signInWithOtp`, `shouldCreateUser: false`); sign out starts a fresh
@@ -316,8 +316,9 @@ app.json, .env.example
   (visible in real builds; Expo Go shows its own icon).
 - ✅ README with setup, run, develop and data-source notes.
 - ✅ Deleted 9 empty test guest accounts (your account kept).
-- 🧑 Add `{{ .Token }}` to the **Magic link** and **Change email address** email templates (README, step 4),
-  then try "Save my data to an email".
+- ✅ Custom SMTP (Resend) set up by you; 8-digit code templates pushed with `supabase config push` (the free
+  default email provider rejects template edits). `config.jsonc` now mirrors the hosted project.
+- 🧑 Try "Save my data to an email" with your Resend sign-up email.
 
 ### Phase 8: Cleanup and release (optional)
 

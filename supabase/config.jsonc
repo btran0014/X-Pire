@@ -282,20 +282,18 @@
       //   "sender_name": "Admin"
       // },
 
-      // Needs custom SMTP (or a paid plan): Supabase rejects template changes on the free
-      // default email provider (entitlement_required, auth.email_templates). Uncomment once SMTP is set up.
-      // Email codes instead of links (links don't open the app in Expo Go). Pushed with
-      // `supabase config push` because the dashboard only allows template edits with custom SMTP.
-      // "template": {
-        // "magic_link": {
-          // "subject": "Your X-Pire sign-in code",
-          // "content_path": "./supabase/templates/magic_link.html"
-        // },
-        // "email_change": {
-          // "subject": "Confirm your email for X-Pire",
-          // "content_path": "./supabase/templates/email_change.html"
-        // }
-      // },
+      // Email codes instead of links (links are fragile in Expo Go). Requires custom SMTP: Supabase
+      // rejects template changes on the free default email provider (SMTP is set up in the dashboard).
+      "template": {
+        "magic_link": {
+          "subject": "Your X-Pire sign-in code",
+          "content_path": "./supabase/templates/magic_link.html"
+        },
+        "email_change": {
+          "subject": "Confirm your email for X-Pire",
+          "content_path": "./supabase/templates/email_change.html"
+        }
+      },
 
       // Uncomment to customize notification email template
       // "notification": {
