@@ -79,21 +79,30 @@ export function productItemName(product: Product): string {
   return full.slice(0, 100);
 }
 
-// --- Throttling: one product read at a time, at most ~13 per minute --------------------------
-const MIN_GAP_MS = 4_500;
-let lastCall = 0;
-let chain: Promise<unknown> = Promise.resolve();
-
-function throttled<T>(task: () => Promise<T>): Promise<T> {
-  const run = chain.then(async () => {
-    const wait = lastCall + MIN_GAP_MS - Date.now();
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    lastCall = Date.now();
-    return task();
-  });
-  chain = run.catch(() => undefined);
-  return run;
+// --- Throttling -------------------------------------------------------------------------------
+/**
+ * Runs tasks one at a time, at least `minGapMs` apart. Callers wait their turn instead of
+ * failing, so a burst of taps can never exceed Open Food Facts' per-minute limits.
+ */
+export function makeThrottle(minGapMs: number) {
+  let lastCall = -Infinity;
+  let chain: Promise<unknown> = Promise.resolve();
+  return function throttled<T>(task: () => Promise<T>): Promise<T> {
+    const run = chain.then(async () => {
+      const wait = lastCall + minGapMs - Date.now();
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      lastCall = Date.now();
+      return task();
+    });
+    chain = run.catch(() => undefined);
+    return run;
+  };
 }
+
+/** Product reads: limit 15/min, so ~13/min. */
+const throttledRead = makeThrottle(4_500);
+/** Searches: limit 10/min, so ~9/min. */
+const throttledSearch = makeThrottle(6_500);
 
 export class ProductLookupError extends Error {}
 
@@ -112,7 +121,7 @@ async function getJson(url: string): Promise<unknown> {
 export function fetchProductByBarcode(barcode: string): Promise<Product | null> {
   const code = normalizeBarcode(barcode);
   if (!code) return Promise.resolve(null);
-  return throttled(async () => {
+  return throttledRead(async () => {
     const body = (await getJson(`${API}/api/v2/product/${code}?fields=${FIELDS}`)) as {
       status?: number;
       product?: RawProduct;
@@ -121,12 +130,12 @@ export function fetchProductByBarcode(barcode: string): Promise<Product | null> 
   });
 }
 
-/** Full-text product search (Search-a-licious). Only call on an explicit user action. */
+/** Full-text product search (Search-a-licious). Only on an explicit user action; throttled. */
 export async function searchProducts(query: string, limit = 8): Promise<Product[]> {
   const q = query.trim();
   if (q.length < 2) return [];
   const url = `${SEARCH}/search?q=${encodeURIComponent(q)}&page_size=${limit}&fields=${FIELDS}`;
-  const body = (await getJson(url)) as { hits?: RawProduct[] };
+  const body = (await throttledSearch(() => getJson(url))) as { hits?: RawProduct[] };
   const seen = new Set<string>();
   const products: Product[] = [];
   for (const hit of body.hits ?? []) {
