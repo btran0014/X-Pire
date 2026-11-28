@@ -17,7 +17,7 @@ export default function SettingsScreen() {
         title={user?.is_anonymous ? 'Guest account' : 'Account'}
         body={
           user?.is_anonymous
-            ? 'Your items are saved to this device’s guest account. If you uninstall the app or clear Expo Go’s data, they can’t be recovered. Saving them to an email account is coming in Phase 6.'
+            ? 'Your items are saved to this device’s guest account. If you uninstall the app or clear Expo Go’s data, they can’t be recovered. Saving them to an email account is coming soon.'
             : (user?.email ?? 'Signed in')
         }
       />

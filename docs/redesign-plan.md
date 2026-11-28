@@ -140,6 +140,48 @@ Decreasing quantity from 1 marks the item `consumed` instead of deleting it.
 The app can't delete its own `auth.users` row with the public key. This small function uses the service role
 to delete the calling user; `on delete cascade` removes their items and receipts. Used by Settings → Delete my data.
 
+## 5c. Product matching and pictures (Phase 6)
+
+A receipt line like "GV 2% MLK GAL" tells us the kind of product, often the brand and size, but rarely the
+exact product. Accuracy comes in three levels, and every item gets the best one available:
+
+| Level              | How                                                                   | Result                                                                                    |
+| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1. Exact product   | Barcode scanned with the camera, or a UPC printed on the receipt line | Exact name, brand, size and the real product photo                                        |
+| 2. Likely product  | Gemini's cleaned name + brand searched in the product database        | Top candidates with photos; preselected only if one is a clear winner, otherwise you pick |
+| 3. Generic picture | No product match                                                      | A food emoji chosen by Gemini (🥛 🥚 🍗 🥬), so no item is ever blank                     |
+
+**Product database: Open Food Facts.** Free and open (data ODbL, photos CC BY-SA, so photos are credited),
+millions of products searchable by barcode or name. Coverage is strongest in Europe and decent in North
+America; store brands and some photos may be missing. USDA FoodData Central (branded US foods with
+barcodes, but no photos) can fill gaps later if needed.
+
+**Data model additions**
+
+```sql
+create table public.products (
+  barcode         text primary key,          -- GTIN/UPC/EAN
+  name            text not null,
+  brand           text,
+  size_label      text,                      -- e.g. "1 gal", "12 ct"
+  image_url       text,
+  image_small_url text,
+  categories      text[] not null default '{}',
+  source          text not null default 'openfoodfacts',
+  fetched_at      timestamptz not null default now()
+);
+-- RLS: select for authenticated; writes only from edge functions (secret key).
+
+alter table public.items
+  add column barcode text references public.products (barcode) on delete set null,
+  add column emoji   text;
+```
+
+**Flow:** `parse-receipt` returns `brand`, `size`, `upc` and `emoji` per line → server looks up printed
+barcodes (exact) and searches by name + brand for the rest via `lookup-product` → the review screen shows
+photos, lets you pick a different candidate, scan the barcode, or keep the emoji. Lookups are cached in
+`products`, so repeat purchases are instant and Open Food Facts' rate limits aren't a problem.
+
 ## 6. Screens (Expo Router)
 
 ```
@@ -165,7 +207,8 @@ app/
 ## 8. Auth
 
 - At launch: Supabase **anonymous sign-in** on first launch, so there is no login screen.
-- Later: "Save your data" in Settings links the anonymous account to email (magic link).
+- Phase 7: "Save your data" in Settings links the anonymous account to an email address using an emailed
+  8-digit code typed into the app (magic links that open the app are unreliable in Expo Go).
   Sign in with Apple / Google can come later; they need extra native setup.
   Until linked, data is lost if Expo Go's data is cleared or the app is reinstalled; Settings says so.
 
@@ -187,6 +230,7 @@ supabase/
   config.toml
   migrations/              versioned SQL (tables, RLS, indexes)
   functions/parse-receipt/ index.ts, prompt.ts, schema.ts, foodkeeper.ts, tests
+  functions/lookup-product/ Open Food Facts lookups + products cache (Phase 6)
   functions/delete-account/
   tests/                   pgTAP tests for RLS
   seed.sql                 FoodKeeper data
@@ -239,7 +283,7 @@ app.json, .env.example
   live end-to-end check against the project (anonymous sign-in, add, isolation, update, delete).
 - 🧑 Try it on your phone in Expo Go.
 
-### Phase 4: Receipt scanning
+### Phase 4: Receipt scanning ✅
 
 - ✅ Scan tab: camera / gallery, shrink to 1600 px JPEG, call `parse-receipt`, review screen, batch insert
   linked to the receipt.
@@ -248,7 +292,7 @@ app.json, .env.example
   FoodKeeper fallback for missing or low-confidence (< 0.5) estimates. Tested live on a sample receipt
   (8/8 items, non-food skipped, ~2.4 s).
 - ✅ `GEMINI_API_KEY` set as a Supabase secret.
-- 🧑 Scan 5–10 real receipts; tell me which ones come out wrong so I can tune the prompt.
+- ✅ Real receipts scanned on your phone: results look good.
 
 ### Phase 5: Reminders ✅
 
@@ -259,19 +303,48 @@ app.json, .env.example
 - ✅ Permission asked once, when there are items to remind about; Settings shows status and offers
   "Allow notifications" / "Open phone settings", plus a 10-second test notification.
 - ✅ Settings are stored on the device (each phone schedules its own reminders). Web preview: no-op.
-- 🧑 Allow notifications on your phone and confirm the test notification arrives.
+- ✅ Test notification arrived on your phone.
 
-### Phase 6: Polish
+### Phase 6: Product matching and pictures
 
-- 🤖 Empty/error/offline states, app icon and splash, dark mode check, export (CSV) and delete-my-data (`delete-account` function).
-- 🤖 Account linking (email magic link).
-- 🤖 README rewrite.
+Goal: every item shows a picture, and the exact product (name, brand, size, photo) whenever it can be known.
+Design in section 5c.
 
-### Phase 7: Cleanup and release (optional)
+- 🤖 Migration: `products` cache table (barcode, name, brand, size, photo URLs, categories, fetched date;
+  readable by signed-in users, written only by edge functions) and new `items` columns `barcode` and `emoji`;
+  pgTAP tests.
+- 🤖 Edge function `lookup-product`: look up by barcode (exact) or by name + brand (top 5 candidates with photos)
+  in the cache first, then Open Food Facts; caches every result; per-user rate limit; identifies the app to
+  Open Food Facts with a User-Agent (no personal details).
+- 🤖 `parse-receipt` also returns brand, size, the printed barcode/UPC when the receipt shows one, and an emoji;
+  the server matches each line: printed barcode → exact product; otherwise a name search, auto-selected only
+  when one candidate is a clear winner.
+- 🤖 Barcode scanner (expo-camera, works in Expo Go) on the add-item screen and on each review card.
+- 🤖 Review screen: product photo per item, "Not right? Pick the exact product" sheet with candidate photos,
+  "Scan barcode", or "Use generic picture".
+- 🤖 Fridge list and edit screen: product photo (cached with expo-image), emoji when there's no product;
+  "Photo: Open Food Facts" credit where product photos are shown.
+- 🤖 Tests: matching and candidate ranking, emoji fallback, cache behaviour; live checks against Open Food Facts.
+- 🧑 Scan a few real barcodes and receipts; tell me which products are missing or wrongly matched.
 
+### Phase 7: Polish
+
+- 🤖 Save your data to an email account: link the guest account using an emailed 8-digit code typed into
+  the app (works in Expo Go; magic links that open the app don't). Sign in with that email on a new phone.
+- 🤖 Delete my data (`delete-account` function, section 5b) and export items to CSV via the share sheet.
+- 🤖 Offline and "server asleep" states, dark mode pass, app icon and splash screen (from the Gemini options
+  you pick), README with setup and run instructions.
+- 🧑 Generate icon options with Gemini and pick one; save the files into `assets/images/`.
+- 🧑 OK to delete the empty test guest accounts left in Supabase by earlier live tests.
+
+### Phase 8: Cleanup and release (optional)
+
+- 🤖 Merge `redesign` into `main` (with your OK).
 - 🧑 Delete the old Firebase project `x-pire-2e0c5` (its data is not migrated).
-- Publishing needs real builds (EAS Build, free tier) and store accounts:
-  Google Play ($25 one-time), Apple Developer ($99/year). Not needed for personal use in Expo Go.
+- Only if other people will use it: custom SMTP for sign-in emails (Supabase's built-in sender allows only a
+  few per hour), CAPTCHA on anonymous sign-in, and paid Gemini so receipt photos aren't used for training.
+- Only if publishing to stores: real builds (EAS Build, free tier) and store accounts,
+  Google Play ($25 one-time) and Apple Developer ($99/year). Not needed for personal use in Expo Go.
 
 ## 11. Costs
 
@@ -280,7 +353,8 @@ app.json, .env.example
 | Expo Go on your phone       | $0                                                        |
 | Supabase free tier          | $0 (project pauses after ~7 days idle; one-click restore) |
 | Gemini Flash-Lite free tier | $0 at personal volume                                     |
-| Expo / EAS free tier        | $0 (only needed for Phase 7)                              |
+| Open Food Facts             | $0 (open data; credit photos)                             |
+| Expo / EAS free tier        | $0 (only needed for Phase 8)                              |
 | Store publishing (optional) | Google Play $25 one-time; Apple $99/year                  |
 
 ## 12. Risks
@@ -292,7 +366,10 @@ app.json, .env.example
 | Free Supabase project pauses after ~7 days idle, app shows errors                         | Clear "server asleep" error state; one-click restore; upgrade only if it becomes annoying                 |
 | Someone abuses anonymous sign-in to burn the Gemini quota                                 | Per-user rate limit + global daily cap; CAPTCHA before public release                                     |
 | Gemini free-tier terms or model names change                                              | Model name in one constant; manual add with FoodKeeper keeps the app usable without AI                    |
-| Anonymous users lose data on reinstall                                                    | Account linking in Phase 6; warning in Settings until linked                                              |
+| Anonymous users lose data on reinstall                                                    | Account linking in Phase 7; warning in Settings until linked                                              |
+| Product not in Open Food Facts, or no photo                                               | Emoji fallback for every item; barcode scan for exact matches; USDA FoodData Central later if needed      |
+| Wrong product auto-matched from a receipt                                                 | Auto-select only on a clear winner; review screen shows the photo and lets you pick or scan instead       |
+| Open Food Facts rate limits or downtime                                                   | Cache every lookup in `products`; matching is optional, scanning still works without it                   |
 | iOS 64 pending-notification limit                                                         | Schedule soonest ~60, reschedule on app open                                                              |
 
 ## 13. Decisions
@@ -300,5 +377,8 @@ app.json, .env.example
 1. **Testing: Expo Go on your own phone.** No Android Studio, emulator, Xcode or custom builds.
    This is why receipt reading happens server-side with Gemini instead of on-device ML Kit.
    UI work can also be previewed in a browser with `npx expo start --web` (scanning and notifications won't work there).
-2. **Old data: discarded.** No Firestore migration; the Firebase project is deleted in Phase 7.
+2. **Old data: discarded.** No Firestore migration; the Firebase project is deleted in Phase 8.
 3. **Receipt photos: not stored.** The shrunken photo is sent to the edge function and Gemini for reading, then discarded.
+4. **Product data: Open Food Facts**, cached in our own `products` table; barcode scan is the only exact path,
+   receipt text gives likely matches, emoji is the fallback.
+5. **App icon:** generated as several options with Gemini; you pick one in Phase 7.
