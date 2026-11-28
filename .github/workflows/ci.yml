@@ -29,6 +29,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Typecheck edge functions (Deno)
+        run: npm run functions:check
+
       - name: Lint
         run: npm run lint
 
