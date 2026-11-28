@@ -33,6 +33,10 @@ export default function RootLayout() {
                 name="item/[id]"
                 options={{ title: 'Edit item', headerBackTitle: 'Fridge' }}
               />
+              <Stack.Screen
+                name="scan/review"
+                options={{ title: 'Review items', headerBackTitle: 'Scan' }}
+              />
             </Stack>
           </AuthGate>
         </AuthProvider>

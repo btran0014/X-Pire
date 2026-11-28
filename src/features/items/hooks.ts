@@ -5,6 +5,7 @@ import {
   fetchActiveItems,
   fetchItem,
   insertItem,
+  insertItems,
   searchShelfLife,
   updateItem,
 } from './api';
@@ -47,6 +48,18 @@ export function useAddItem() {
     mutationFn: (item: NewItem) => insertItem(item),
     onSuccess: (created) => {
       queryClient.setQueryData<Item[]>(itemKeys.active, (old) => [...(old ?? []), created]);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: itemKeys.active }),
+  });
+}
+
+/** Adds several items at once (receipt review). */
+export function useAddItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (items: NewItem[]) => insertItems(items),
+    onSuccess: (created) => {
+      queryClient.setQueryData<Item[]>(itemKeys.active, (old) => [...(old ?? []), ...created]);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: itemKeys.active }),
   });

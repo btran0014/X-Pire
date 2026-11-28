@@ -68,3 +68,9 @@ export async function fetchShelfLifeFor(
   if (error) throw error;
   return data;
 }
+
+export async function insertItems(items: NewItem[]): Promise<Item[]> {
+  const { data, error } = await supabase.from('items').insert(items).select();
+  if (error) throw error;
+  return data;
+}

@@ -241,9 +241,13 @@ app.json, .env.example
 
 ### Phase 4: Receipt scanning
 
-- 🤖 Scan tab: camera / gallery, shrink image, call `parse-receipt`, review screen, batch insert.
-- 🤖 Write and deploy `parse-receipt` with tests (size limit, rate limit, daily cap, output validation).
-- 🧑 `npx supabase secrets set GEMINI_API_KEY=...`
+- ✅ Scan tab: camera / gallery, shrink to 1600 px JPEG, call `parse-receipt`, review screen, batch insert
+  linked to the receipt.
+- ✅ `parse-receipt` deployed (`npm run functions:deploy`): Gemini `gemini-3.5-flash-lite` via `generateContent`
+  (model overridable with the `GEMINI_MODEL` secret), JSON validated, 20 scans/user/hour, 200/day overall,
+  FoodKeeper fallback for missing or low-confidence (< 0.5) estimates. Tested live on a sample receipt
+  (8/8 items, non-food skipped, ~2.4 s).
+- ✅ `GEMINI_API_KEY` set as a Supabase secret.
 - 🧑 Scan 5–10 real receipts; tell me which ones come out wrong so I can tune the prompt.
 
 ### Phase 5: Reminders
