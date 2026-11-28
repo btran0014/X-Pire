@@ -250,10 +250,16 @@ app.json, .env.example
 - ✅ `GEMINI_API_KEY` set as a Supabase secret.
 - 🧑 Scan 5–10 real receipts; tell me which ones come out wrong so I can tune the prompt.
 
-### Phase 5: Reminders
+### Phase 5: Reminders ✅
 
-- 🤖 expo-notifications scheduling, settings for time and lead days.
-- 🧑 Allow notifications on your phone and confirm one arrives (a debug button fires one in 10 seconds).
+- ✅ Local notifications (work in Expo Go; only remote push needs a development build).
+- ✅ Heads-up N days before (default 2) and on the expiry day at a chosen time (default 9:00); items firing
+  at the same time are merged into one notification; soonest 60 scheduled (iOS limit is 64).
+- ✅ Rescheduled when items or settings change and whenever the app comes to the foreground.
+- ✅ Permission asked once, when there are items to remind about; Settings shows status and offers
+  "Allow notifications" / "Open phone settings", plus a 10-second test notification.
+- ✅ Settings are stored on the device (each phone schedules its own reminders). Web preview: no-op.
+- 🧑 Allow notifications on your phone and confirm the test notification arrives.
 
 ### Phase 6: Polish
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { AuthGate } from '@/components/auth-gate';
+import { ReminderSync } from '@/features/reminders/reminder-sync';
 import { AuthProvider } from '@/providers/auth-provider';
 
 export default function RootLayout() {
@@ -23,6 +24,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <AuthGate>
+            <ReminderSync />
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen

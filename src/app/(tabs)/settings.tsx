@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { PlaceholderCard } from '@/components/placeholder-card';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { ReminderSettingsCard } from '@/features/reminders/reminder-settings-card';
 import { useAuth } from '@/providers/auth-provider';
 
 export default function SettingsScreen() {
@@ -20,10 +21,7 @@ export default function SettingsScreen() {
             : (user?.email ?? 'Signed in')
         }
       />
-      <PlaceholderCard
-        title="Reminders"
-        body="Coming in Phase 5: choose when you get notified before food expires."
-      />
+      <ReminderSettingsCard />
       <ThemedText type="small" themeColor="textSecondary">
         X-Pire {version}
         {user ? ` · user ${user.id.slice(0, 8)}` : ''}
