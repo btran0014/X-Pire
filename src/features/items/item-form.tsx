@@ -104,7 +104,11 @@ export function ItemForm({
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ThemedView style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          // iOS: keep content below the navigation header instead of under it.
+          contentInsetAdjustmentBehavior="automatic">
           {/* Name + suggestions */}
           <View style={styles.field}>
             <ThemedText type="smallBold">Name</ThemedText>

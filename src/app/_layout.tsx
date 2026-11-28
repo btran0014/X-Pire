@@ -27,11 +27,11 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="item/new"
-                options={{ title: 'Add item', presentation: 'modal' }}
+                options={{ title: 'Add item', headerBackTitle: 'Fridge' }}
               />
               <Stack.Screen
                 name="item/[id]"
-                options={{ title: 'Edit item', presentation: 'modal' }}
+                options={{ title: 'Edit item', headerBackTitle: 'Fridge' }}
               />
             </Stack>
           </AuthGate>
