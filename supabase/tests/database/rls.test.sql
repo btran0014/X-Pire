@@ -19,7 +19,7 @@ values
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222');
 
 insert into public.shelf_life (source_id, name, keywords, storage, min_days, max_days)
-values (1, 'Milk', '{milk}', 'fridge', 7, 7);
+values (999999, 'Test item', '{test}', 'fridge', 7, 7);
 
 -- ---------------------------------------------------------------------------
 -- Alice
@@ -41,7 +41,7 @@ select is(
 
 select is((select count(*)::int from public.items), 1, 'Alice sees her item');
 select is((select count(*)::int from public.receipts), 1, 'Alice sees only her own receipt');
-select is((select count(*)::int from public.shelf_life), 1, 'Alice can read shelf life data');
+select ok((select count(*) from public.shelf_life) > 1000, 'Alice can read shelf life data (FoodKeeper rows present)');
 
 select throws_ok(
   $$ insert into public.items (user_id, name, purchased_on, expires_on)
@@ -70,7 +70,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ insert into public.shelf_life (source_id, name, storage) values (2, 'Fake', 'pantry') $$,
+  $$ insert into public.shelf_life (source_id, name, storage) values (999998, 'Fake', 'pantry') $$,
   '42501', null,
   'Clients cannot write shelf life data'
 );

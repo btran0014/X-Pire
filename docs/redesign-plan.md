@@ -213,7 +213,7 @@ app.json, .env.example
 - ✅ GitHub Actions CI: typecheck, lint, format check, tests. `npm run check` runs the same locally.
 - 🧑 Run `npm start`, scan the QR code with Expo Go (same Wi-Fi as the PC, or `npx expo start --tunnel`).
 
-### Phase 2: Backend
+### Phase 2: Backend ✅
 
 - ✅ Project `X-pire` (us-east-2) created and linked; `.env` filled in.
 - ✅ `supabase init` (CLI 3.x writes `supabase/config.jsonc`), schema migration with RLS + `updated_at` trigger,
@@ -223,7 +223,10 @@ app.json, .env.example
 - 🧑 Enable anonymous sign-ins in the dashboard: Authentication → Sign In / Providers → "Allow anonymous sign-ins".
   **Don't run `supabase config push`:** `config.jsonc` holds local-dev defaults, and pushing it would turn off
   email confirmations and MFA on the hosted project.
-- 🤖 Build FoodKeeper seed (downloads the public USDA dataset; asks first) and load it.
+- ✅ FoodKeeper loaded: `scripts/build-foodkeeper-migration.mjs` turns the USDA JSON (downloaded in a browser;
+  the server blocks scripts) into a migration. 1,070 rows / 661 products; 57 rows are advice only
+  (e.g. milk: "use the package date"). The raw file is not committed.
+- ✅ Supabase MCP connected (not read-only; used for reads only, changes go through migrations).
 
 ### Phase 3: Inventory
 
