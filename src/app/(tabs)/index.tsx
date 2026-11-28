@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { describeError } from '@/lib/errors';
 import { useActiveItems } from '@/features/items/hooks';
 import { ItemRow } from '@/features/items/item-row';
 import { groupItems } from '@/features/items/logic';
@@ -69,7 +70,9 @@ export default function FridgeScreen() {
   } else if (items.isError) {
     empty = (
       <View style={styles.empty}>
-        <ThemedText themeColor="expired">Couldn&apos;t load your items.</ThemedText>
+        <ThemedText themeColor="expired" style={styles.centerText}>
+          {describeError(items.error, "Couldn't load your items.")}
+        </ThemedText>
         <Button label="Try again" variant="secondary" onPress={() => items.refetch()} />
       </View>
     );

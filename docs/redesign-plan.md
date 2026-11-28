@@ -303,15 +303,21 @@ app.json, .env.example
   where photos appear and in Settings → Data sources.
 - 🧑 Scan a few real barcodes and receipts; tell me which products are missing or wrongly matched.
 
-### Phase 7: Polish
+### Phase 7: Polish ✅ (email codes need your template change)
 
-- 🤖 Save your data to an email account: link the guest account using an emailed 8-digit code typed into
-  the app (works in Expo Go; magic links that open the app don't). Sign in with that email on a new phone.
-- 🤖 Delete my data (`delete-account` function, section 5b) and export items to CSV via the share sheet.
-- 🤖 Offline and "server asleep" states, dark mode pass, app icon and splash screen (from the Gemini options
-  you pick), README with setup and run instructions.
-- 🧑 Generate icon options with Gemini and pick one; save the files into `assets/images/`.
-- 🧑 OK to delete the empty test guest accounts left in Supabase by earlier live tests.
+- ✅ Save a guest account to an email (`updateUser` + 8-digit code, `verifyOtp` type `email_change`) so items
+  carry over; sign in on another phone (`signInWithOtp`, `shouldCreateUser: false`); sign out starts a fresh
+  guest; cached data is cleared whenever the user changes.
+- ✅ Delete my data: `delete-account` function deletes only the caller (tested live); items cascade.
+- ✅ Export all items to CSV via the share sheet (browser download on web), formula-safe.
+- ✅ Friendlier errors for offline / paused server / expired session; dark mode check (no hard-coded colours
+  except the white tile behind product photos).
+- ✅ App icon, Android adaptive + monochrome icons and splash from the chosen Gemini design
+  (visible in real builds; Expo Go shows its own icon).
+- ✅ README with setup, run, develop and data-source notes.
+- ✅ Deleted 9 empty test guest accounts (your account kept).
+- 🧑 Add `{{ .Token }}` to the **Magic link** and **Change email address** email templates (README, step 4),
+  then try "Save my data to an email".
 
 ### Phase 8: Cleanup and release (optional)
 

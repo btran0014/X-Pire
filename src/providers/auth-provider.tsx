@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { describeError } from '@/lib/errors';
 import { supabase, supabaseConfigError } from '@/lib/supabase';
 
 type AuthState =
@@ -115,8 +116,6 @@ function friendlyAuthError(message: string): string {
   if (/anonymous sign-ins are disabled/i.test(message)) {
     return 'Anonymous sign-ins are turned off in Supabase (Authentication → Sign In / Providers).';
   }
-  if (/network|fetch|timed out/i.test(message)) {
-    return "Can't reach the server. Check your connection. If the Supabase project was paused, restore it in the dashboard.";
-  }
+  if (/network|fetch|timed out/i.test(message)) return describeError(new Error(message));
   return `Couldn't sign in: ${message}`;
 }

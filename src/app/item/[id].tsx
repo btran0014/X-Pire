@@ -11,6 +11,7 @@ import { ItemForm } from '@/features/items/item-form';
 import type { ItemStatus } from '@/features/items/types';
 import { useTheme } from '@/hooks/use-theme';
 import { confirm } from '@/lib/confirm';
+import { describeError } from '@/lib/errors';
 
 const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -63,7 +64,7 @@ export default function EditItemScreen() {
       initialProduct={itemToProduct(current)}
       submitLabel="Save changes"
       submitting={update.isPending}
-      errorMessage={error ? `Couldn't save: ${error.message}` : null}
+      errorMessage={error ? describeError(error, `Couldn't save: ${error.message}`) : null}
       onSubmit={(values, product) =>
         update.mutate(
           { id: current.id, changes: formToItem(values, product) },
