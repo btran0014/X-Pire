@@ -37,3 +37,23 @@ jobs:
 
       - name: Unit tests
         run: npm test -- --ci
+
+  database:
+    name: Database migrations and RLS tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Starts Postgres only (Supabase image, includes the auth schema) and applies supabase/migrations.
+      - name: Start local database
+        run: npx supabase db start
+
+      - name: RLS tests (pgTAP)
+        run: npx supabase test db

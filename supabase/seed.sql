@@ -1,0 +1,2 @@
+-- Local development seed data (runs on `npx supabase db reset` only, never on the hosted project).
+-- Reference data the app needs in production (FoodKeeper shelf life) lives in migrations instead.
