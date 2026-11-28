@@ -330,6 +330,17 @@ app.json, .env.example
   anonymous sign-in, and paid Gemini so receipt photos aren't used for training. (Custom SMTP is done.)
 - Only if publishing to stores: real builds (EAS Build, free tier) and store accounts,
   Google Play ($25 one-time) and Apple Developer ($99/year). Not needed for personal use in Expo Go.
+- ✅ Extra CI: Expo bundle for all platforms + expo-doctor; database types drift check; Deno lint for edge
+  functions; gitleaks secret scan (push, PR, weekly); CodeQL `security-extended`; Dependabot for Actions.
+
+#### Later CI (deferred on purpose; revisit when the trigger applies)
+
+- **Deploy from CI** (push migrations and edge functions when `main` changes). Trigger: other contributors, or
+  deploying by hand becomes a chore. Needs GitHub secrets for a Supabase access token and the database
+  password; run `config diff` / `db push --dry-run` as a gate first.
+- **EAS preview builds / OTA updates per pull request.** Trigger: real builds exist (EAS). Needs an Expo access
+  token secret.
+- **Push protection for secrets** (repo setting): only the repo owner can enable it.
 
 ## 11. Costs
 

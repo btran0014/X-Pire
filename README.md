@@ -74,14 +74,19 @@ through the repo), and pushes leave them untouched.
 ## Develop
 
 ```bash
-npm run check            # typecheck, Deno check of edge functions, lint, format, tests (same as CI)
+npm run check            # typecheck, Deno check + lint of edge functions, lint, format, tests
 npm test                 # unit tests
 npm run db:push          # apply new migrations to the linked project
 npm run db:types         # regenerate src/types/database.ts after schema changes
 npm run functions:deploy # deploy parse-receipt and delete-account
 ```
 
-Database security tests (pgTAP) live in `supabase/tests` and run in CI against a real Supabase Postgres.
+CI (GitHub Actions) runs on every push and pull request:
+
+- **CI:** `npm run check` steps; Expo bundle for Android, iOS and web plus `expo-doctor`; database migrations
+  with pgTAP security tests (`supabase/tests`) and a check that `src/types/database.ts` matches the migrations.
+- **Security:** gitleaks secret scan (also weekly) and CodeQL code scanning.
+- **Dependabot** keeps GitHub Actions versions current (npm packages follow the Expo SDK: `npx expo install --fix`).
 
 ## Project layout
 
