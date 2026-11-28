@@ -20,8 +20,7 @@ const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 const generated = execFileSync(
   npx,
-  ['supabase', 'gen', 'types', 'typescript', '--schema', 'public'],
-  {
+  ['supabase', 'gen', 'types', 'typescript', '--local', '--schema', 'public'],
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
     shell: process.platform === 'win32',
