@@ -4,6 +4,11 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.30",
+    "@hookform/resolvers": "^7.0.9",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "9.2.1",
+    "@supabase/supabase-js": "^2.119.2",
+    "@tanstack/react-query": "^5.108.4",
     "date-fns": "^4.4.0",
     "expo": "~58.1.0",
     "expo-constants": "~58.0.16",
@@ -20,13 +25,15 @@
     "expo-web-browser": "~58.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-hook-form": "^7.92.0",
     "react-native": "0.88.1",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
     "react-native-web": "~0.21.4",
-    "react-native-worklets": "0.13.0"
+    "react-native-worklets": "0.13.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",

@@ -228,11 +228,16 @@ app.json, .env.example
   (e.g. milk: "use the package date"). The raw file is not committed.
 - ✅ Supabase MCP connected (not read-only; used for reads only, changes go through migrations).
 
-### Phase 3: Inventory
+### Phase 3: Inventory ✅
 
-- 🤖 Anonymous auth bootstrap, items list with sections, add/edit/delete, quantity, consumed/discarded, FoodKeeper autocomplete.
-- 🤖 Unit tests for date logic and item grouping.
-- 🧑 Try it on your phone.
+- ✅ Anonymous sign-in on first launch (session saved in AsyncStorage); retry screen if Supabase is unreachable.
+- ✅ Fridge list grouped Expired / Expiring soon / Fresh, storage filter, +/− quantity (− at 1 marks it used up),
+  pull to refresh, empty and error states.
+- ✅ Add / edit screens: USDA FoodKeeper autocomplete (`search_shelf_life` database function) fills the expiry date
+  and keeps it in sync with storage and purchase date until you pick a date yourself; used up / threw out / delete.
+- ✅ Tests: date logic, grouping, shelf-life formatting, form validation, quantity rule; pgTAP for the search function;
+  live end-to-end check against the project (anonymous sign-in, add, isolation, update, delete).
+- 🧑 Try it on your phone in Expo Go.
 
 ### Phase 4: Receipt scanning
 

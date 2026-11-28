@@ -4,7 +4,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(24);
 
 -- Two users. Inserting into auth.users as postgres is how Supabase tests create users.
 insert into auth.users (id, email, aud, role)
@@ -82,6 +82,11 @@ set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222",
 
 select is((select count(*)::int from public.items), 0, 'Bob cannot see Alice''s items');
 
+select ok(
+  (select count(*) from public.search_shelf_life('test')) >= 1,
+  'Signed-in users can search shelf life data'
+);
+
 -- RLS hides Alice's row from Bob, so these affect 0 rows instead of erroring.
 update public.items set name = 'Hacked';
 delete from public.items;
@@ -127,6 +132,11 @@ set local request.jwt.claims to '{"role": "anon"}';
 
 select throws_ok($$ select * from public.items $$, '42501', null, 'anon cannot read items');
 select throws_ok($$ select * from public.shelf_life $$, '42501', null, 'anon cannot read shelf life');
+select throws_ok(
+  $$ select * from public.search_shelf_life('milk') $$,
+  '42501', null,
+  'anon cannot call search_shelf_life'
+);
 select throws_ok(
   $$ insert into public.items (name, purchased_on, expires_on) values ('x', '2026-11-27', '2026-12-04') $$,
   '42501', null,

@@ -129,7 +129,31 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      search_shelf_life: {
+        Args: {
+          max_results?: number;
+          query: string;
+          storage_filter?: Database['public']['Enums']['storage_location'];
+        };
+        Returns: {
+          category: string | null;
+          id: number;
+          keywords: string[];
+          max_days: number | null;
+          min_days: number | null;
+          name: string;
+          source_id: number;
+          storage: Database['public']['Enums']['storage_location'];
+          subtitle: string | null;
+          tips: string | null;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'shelf_life';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
     };
     Enums: {
       expiry_source: 'ai' | 'foodkeeper' | 'manual';

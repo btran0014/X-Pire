@@ -1,13 +1,42 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { useState } from 'react';
 import { useColorScheme } from 'react-native';
 
-import AppTabs from '@/components/app-tabs';
+import { AuthGate } from '@/components/auth-gate';
+import { AuthProvider } from '@/providers/auth-provider';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 30_000, retry: 1 },
+          mutations: { retry: 0 },
+        },
+      }),
+  );
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AppTabs />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AuthGate>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="item/new"
+                options={{ title: 'Add item', presentation: 'modal' }}
+              />
+              <Stack.Screen
+                name="item/[id]"
+                options={{ title: 'Edit item', presentation: 'modal' }}
+              />
+            </Stack>
+          </AuthGate>
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }
