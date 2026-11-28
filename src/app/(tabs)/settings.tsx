@@ -4,6 +4,7 @@ import { PlaceholderCard } from '@/components/placeholder-card';
 import { Screen } from '@/components/screen';
 import { OffCredit } from '@/components/off-credit';
 import { ThemedText } from '@/components/themed-text';
+import { AccountCard } from '@/features/account/account-card';
 import { ReminderSettingsCard } from '@/features/reminders/reminder-settings-card';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -14,14 +15,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen title="Settings">
-      <PlaceholderCard
-        title={user?.is_anonymous ? 'Guest account' : 'Account'}
-        body={
-          user?.is_anonymous
-            ? 'Your items are saved to this device’s guest account. If you uninstall the app or clear Expo Go’s data, they can’t be recovered. Saving them to an email account is coming soon.'
-            : (user?.email ?? 'Signed in')
-        }
-      />
+      <AccountCard />
       <ReminderSettingsCard />
       <PlaceholderCard
         title="Data sources"

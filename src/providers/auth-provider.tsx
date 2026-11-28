@@ -1,5 +1,14 @@
 import type { Session } from '@supabase/supabase-js';
-import { createContext, use, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { supabase, supabaseConfigError } from '@/lib/supabase';
 
@@ -29,8 +38,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (supabaseConfigError) return;
     let cancelled = false;
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!cancelled && session) setState({ status: 'signedIn', session });
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (session) {
+        setState({ status: 'signedIn', session });
+      } else if (event === 'SIGNED_OUT') {
+        // Signed out (or account deleted): start a fresh guest account on this phone.
+        // Deferred so no Supabase call runs inside the auth callback.
+        setTimeout(() => {
+          setState({ status: 'loading' });
+          setAttempt((n) => n + 1);
+        }, 0);
+      }
     });
 
     (async () => {
@@ -60,6 +79,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.subscription.unsubscribe();
     };
   }, [attempt]);
+
+  // Different user (sign in / sign out / delete): drop everything cached for the previous one.
+  const queryClient = useQueryClient();
+  const userId = state.status === 'signedIn' ? state.session.user.id : null;
+  const lastUserId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    if (lastUserId.current && lastUserId.current !== userId) queryClient.clear();
+    lastUserId.current = userId;
+  }, [userId, queryClient]);
 
   const retry = useCallback(() => {
     setState({ status: 'loading' });
