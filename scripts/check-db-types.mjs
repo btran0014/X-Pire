@@ -5,8 +5,8 @@
  *
  * Fix a failure with: npm run db:push && npm run db:types
  *
- * The PostgrestVersion line is ignored: it reflects the API server version of whichever
- * database the types were generated from (hosted vs local), not the schema.
+ * The `__InternalSupabase` block (API server version) is ignored: the hosted project includes it
+ * and a local database doesn't, and it describes the server, not the schema.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -29,11 +29,20 @@ const generated = execFileSync(
 );
 
 const options = { ...(await prettier.resolveConfig(FILE)), filepath: FILE };
+
+/** Drops the `__InternalSupabase: { ... };` block and the comment lines directly above it. */
+export function withoutInternalBlock(lines) {
+  const start = lines.findIndex((line) => /^\s*__InternalSupabase: \{/.test(line));
+  if (start === -1) return lines;
+  let end = start;
+  while (end < lines.length && !/^\s*\};?\s*$/.test(lines[end])) end++;
+  let from = start;
+  while (from > 0 && /^\s*\/\//.test(lines[from - 1])) from--;
+  return [...lines.slice(0, from), ...lines.slice(end + 1)];
+}
+
 const normalize = async (source) =>
-  (await prettier.format(source, options))
-    .split('\n')
-    .filter((line) => !/PostgrestVersion:/.test(line))
-    .join('\n');
+  withoutInternalBlock((await prettier.format(source, options)).split('\n')).join('\n');
 
 const expected = await normalize(generated);
 const actual = await normalize(readFileSync(FILE, 'utf8'));
