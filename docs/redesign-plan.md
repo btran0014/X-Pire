@@ -241,7 +241,7 @@ app.json, .env.example
 - ✅ ESLint (eslint-config-expo) + Prettier, Jest (jest-expo) with tests for the expiry date logic (`src/lib/dates.ts`).
 - ✅ Supabase CLI as a dev dependency; `.env.example`.
 - ✅ GitHub Actions CI: typecheck, lint, format check, tests. `npm run check` runs the same locally.
-- 🧑 Run `npm start`, scan the QR code with Expo Go (same Wi-Fi as the PC, or `npx expo start --tunnel`).
+- ✅ Runs on your phone in Expo Go (`npm start`, or `npx expo start --tunnel`).
 
 ### Phase 2: Backend ✅
 
@@ -267,7 +267,7 @@ app.json, .env.example
   and keeps it in sync with storage and purchase date until you pick a date yourself; used up / threw out / delete.
 - ✅ Tests: date logic, grouping, shelf-life formatting, form validation, quantity rule; pgTAP for the search function;
   live end-to-end check against the project (anonymous sign-in, add, isolation, update, delete).
-- 🧑 Try it on your phone in Expo Go.
+- ✅ Tried on your phone (add/edit screen header fix included).
 
 ### Phase 4: Receipt scanning ✅
 
@@ -301,7 +301,7 @@ app.json, .env.example
 - ✅ Barcode scanner screen (expo-camera, works in Expo Go) and Find product screen with photos.
 - ✅ Review cards, add/edit form and Fridge rows show the product photo or emoji; Open Food Facts credited
   where photos appear and in Settings → Data sources.
-- 🧑 Scan a few real barcodes and receipts; tell me which products are missing or wrongly matched.
+- ✅ Barcode scans and product photos checked on your phone.
 
 ### Phase 7: Polish ✅
 
@@ -318,14 +318,16 @@ app.json, .env.example
 - ✅ Deleted 9 empty test guest accounts (your account kept).
 - ✅ Custom SMTP (Resend) set up by you; 8-digit code templates pushed with `supabase config push` (the free
   default email provider rejects template edits). `config.jsonc` now mirrors the hosted project.
-- 🧑 Try "Save my data to an email" with your Resend sign-up email.
+- ✅ "Save my data to an email" tested on your phone: code arrived, guest data saved.
 
 ### Phase 8: Cleanup and release (optional)
 
-- 🤖 Merge `redesign` into `main` (with your OK).
-- 🧑 Delete the old Firebase project `x-pire-2e0c5` (its data is not migrated).
-- Only if other people will use it: custom SMTP for sign-in emails (Supabase's built-in sender allows only a
-  few per hour), CAPTCHA on anonymous sign-in, and paid Gemini so receipt photos aren't used for training.
+- ✅ Final checks: CI green on every push; repo clean; plan and README up to date.
+- ✅ Pull request `redesign` → `main` opened for review (not merged; merge is your call).
+- 🧑 Delete the old Firebase project `x-pire-2e0c5` in the Firebase console (nothing uses it; its data was
+  not migrated). Its old client keys in git history stop working once the project is gone.
+- Only if other people will use it: verify a domain in Resend (so codes reach any address), CAPTCHA on
+  anonymous sign-in, and paid Gemini so receipt photos aren't used for training. (Custom SMTP is done.)
 - Only if publishing to stores: real builds (EAS Build, free tier) and store accounts,
   Google Play ($25 one-time) and Apple Developer ($99/year). Not needed for personal use in Expo Go.
 
